@@ -33,8 +33,10 @@ async function fail(r: Response): Promise<never> {
   throw new ApiError(r.status, msg)
 }
 
+const API_BASE = (import.meta as any).env?.VITE_API_URL || ''
+
 async function req<T>(path: string, o: Opts = {}): Promise<T> {
-  const r = await fetch(`/api${path}`, {
+  const r = await fetch(`${API_BASE}/api${path}`, {
     method: o.method ?? (o.body !== undefined ? 'POST' : 'GET'),
     headers: buildHeaders(o),
     body: o.body !== undefined ? JSON.stringify(o.body) : undefined,
@@ -44,7 +46,7 @@ async function req<T>(path: string, o: Opts = {}): Promise<T> {
 }
 
 export async function fetchBlob(path: string, o: Opts = {}): Promise<Blob> {
-  const r = await fetch(`/api${path}`, { headers: buildHeaders(o) })
+  const r = await fetch(`${API_BASE}/api${path}`, { headers: buildHeaders(o) })
   if (!r.ok) return fail(r)
   return r.blob()
 }

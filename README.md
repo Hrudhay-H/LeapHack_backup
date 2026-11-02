@@ -25,9 +25,10 @@ This is a working end-to-end **prototype**. It runs on real public drone imagery
 7. [Evidence and limits](#evidence-and-limits)
 8. [Backend, security and configuration](#backend-security-and-configuration)
 9. [Testing](#testing)
-10. [Pitch deck](#pitch-deck)
-11. [Roadmap](#roadmap)
-12. [Licences and attribution](#licences-and-attribution)
+10. [Deploying](#deploying)
+11. [Pitch deck](#pitch-deck)
+12. [Roadmap](#roadmap)
+13. [Licences and attribution](#licences-and-attribution)
 
 ## What is in the box
 
@@ -162,15 +163,19 @@ ml/tests/               unit tests and the browser end-to-end test
 backend/app/            FastAPI app: routes, models, security, ingest, reports, sms, simulation, seed
 backend/tests/          API flow tests
 frontend/src/           React app: pages, components, i18n (English, Kannada), API client
-scripts/bootstrap_demo.py   one-command demo setup
+scripts/bootstrap_demo.py   one-command demo setup (add --sim for the rice survey-day simulator)
+scripts/docker-entrypoint.sh   container start script
+Dockerfile              builds the API image (CPU PyTorch, Chromium, baked demo)
+deploy/demo-data/       prepared rice survey blocks for the simulator (about 21 MB, CC BY 4.0, attribution in each survey.json)
 docs/img/               README screenshots
 docs/pitch-deck/        pitch deck slide source
+docs/DEPLOY.md          deploying to Vercel and a container host
 data/experiments/       small result files that back the README numbers (everything else under data/ is generated)
 ```
 
 ## Data
 
-Datasets, trained models, run outputs and the database are **not committed**. Everything under `data/` except `data/experiments/` is generated or downloaded. The base demo needs none of it (`scripts/bootstrap_demo.py` makes synthetic fields). The real datasets below are optional and each has its own licence.
+Datasets, trained models, run outputs and the database are **not committed**. Everything under `data/` except `data/experiments/` is generated or downloaded. The base demo needs none of it (`scripts/bootstrap_demo.py` makes synthetic fields). The one exception is a small prepared subset of the rice dataset (four survey blocks, about 21 MB, with the dataset's attribution and a note of the changes made in each `survey.json`) shipped in `deploy/demo-data/` so the survey-day simulator works without the 3.8 GB download. The real datasets below are optional and each has its own licence.
 
 | Dataset | Used for | Licence | Size | Status |
 |---|---|---|---|---|
@@ -203,7 +208,9 @@ Note the source metadata lists nodata as -10000 but the pixels do not use it; th
 
 ### Rice survey-day simulator
 
-The dataset's files are on Google Drive and scripted downloads are rate-limited, so download the folder **in a browser** from the link in its [figshare record](https://doi.org/10.6084/m9.figshare.26955862) and place the zip parts in `data/raw/blb/drive/`.
+**Quick path (no download):** `uv run python scripts/bootstrap_demo.py --sim` installs the shipped blocks from `deploy/demo-data/` and fits the reference.
+
+**From the full dataset:** the dataset's files are on Google Drive and scripted downloads are rate-limited, so download the folder **in a browser** from the link in its [figshare record](https://doi.org/10.6084/m9.figshare.26955862) and place the zip parts in `data/raw/blb/drive/`.
 
 ```bash
 uv run python -m agriscout_ml.blb_index --zips "data/raw/blb/drive/*.zip"   # extract patches and masks (~2.8 GB) and index them
@@ -260,9 +267,13 @@ Interactive docs at `/docs`. Prefixes: `/api/farmer` (login, survey, layers, rep
 | `AGRISCOUT_SECRET` | `dev-only-secret-change-me` | HMAC key for codes and tokens. **Set this outside local development.** |
 | `AGRISCOUT_ADMIN_KEY` | `demo-admin` | Admin API key. **Change it.** |
 | `AGRISCOUT_DEMO` | `1` | When `1`, `/api/dev/sms` exposes the SMS outbox, **including one-time codes**, so the demo phone works. Set `0` anywhere real. |
+| `AGRISCOUT_CORS_ORIGINS` | none (local dev origins only) | Comma-separated browser origins allowed to call the API, e.g. your Vercel URL. `*` allows any. |
+| `AGRISCOUT_CORS_REGEX` | none | Optional regex for extra origins, e.g. Vercel preview URLs |
 | `AGRISCOUT_DB` | `data/agriscout.db` | SQLite path |
 
-Operator PINs in the seed are all `1234`. CORS allows only `localhost:5173`. This is a prototype and has not had a security review.
+The frontend reads one build-time variable, `VITE_API_URL` (the API's public URL; empty for local development, see `frontend/.env.example`).
+
+Operator PINs in the seed are all `1234`. Browser CORS allows only `localhost:5173` plus whatever you list in `AGRISCOUT_CORS_ORIGINS`. This is a prototype and has not had a security review.
 
 ### Real SMS
 
@@ -283,6 +294,10 @@ uv run --with requests --with pypdfium2 python ml/tests/e2e_ui.py data/e2e
 It leaves the database changed (it records a verdict and runs analyses), so re-run `scripts/bootstrap_demo.py --reset` afterwards.
 
 Unit tests cover the plumbing and the no-false-alarm behaviour on synthetic fields. They do **not** measure real pest-detection accuracy.
+
+## Deploying
+
+The React app deploys to **Vercel**; the API runs in a **container** (`Dockerfile`) on any host that can run Docker, because it needs PyTorch, headless Chromium for PDFs and a writable disk, none of which fit a serverless function. Step-by-step instructions, environment variables and troubleshooting are in **[docs/DEPLOY.md](docs/DEPLOY.md)**.
 
 ## Pitch deck
 

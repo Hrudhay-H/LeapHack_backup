@@ -1,0 +1,43 @@
+{
+  "data_source": "real_imagery_simulated_stress",
+  "crop": "paddy",
+  "site": "healthy_site",
+  "source": "healthy_site_block_c",
+  "doi": "10.6084/m9.figshare.26955862",
+  "license": "CC-BY-4.0",
+  "attribution": "UAV BLB dataset: bacterial leaf blight in paddy rice, DJI Phantom 4 Multispectral, figshare doi 10.6084/m9.figshare.26955862 (CC BY 4.0)",
+  "gsd_m": 0.04415999999998704,
+  "reflectance_calibrated": false,
+  "note": "Mosaic stitched from 256 px dataset patches; RGB is pseudo-RGB from the red/green/blue bands. Expert labels are subplot-level severity scores.",
+  "simulated_stress": "Simulated stress patches were blended into this real imagery (band shifts mimicking vegetation stress). They are not real pest or disease damage.",
+  "planted": [
+    {
+      "radius_m": 2.2,
+      "severity": 0.7,
+      "aspect": 3.2,
+      "angle_deg": 30,
+      "name": "elongated strip"
+    },
+    {
+      "radius_m": 1.6,
+      "severity": 0.55,
+      "aspect": 1.0,
+      "angle_deg": 0.0,
+      "name": "medium patch"
+    },
+    {
+      "radius_m": 1.0,
+      "severity": 0.8,
+      "aspect": 1.0,
+      "angle_deg": 0.0,
+      "name": "small severe patch"
+    },
+    {
+      "radius_m": 0.6,
+      "severity": 0.5,
+      "aspect": 1.0,
+      "angle_deg": 0.0,
+      "name": "tiny patch"
+    }
+  ]
+}

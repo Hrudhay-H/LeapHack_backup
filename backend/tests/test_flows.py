@@ -141,3 +141,32 @@ def test_notify_sends_kannada_sms(client):
     body = client.get("/api/dev/sms", params={"mobile": "9000000001"}).json()[0]["body"]
     assert "ಸಮೀಕ್ಷೆ" in body and "MDY-001" in body
     assert client.post("/api/admin/surveys/FARM-001-S01/notify").status_code == 403
+
+
+def test_cors_allow_list_is_configurable_and_defaults_to_local(monkeypatch):
+    from backend.app.main import LOCAL_ORIGINS, cors_origins
+
+    monkeypatch.delenv("AGRISCOUT_CORS_ORIGINS", raising=False)
+    assert cors_origins() == LOCAL_ORIGINS
+    monkeypatch.setenv("AGRISCOUT_CORS_ORIGINS", "https://agriscout.vercel.app/, https://b.example")
+    assert cors_origins() == ["https://agriscout.vercel.app", "https://b.example", *LOCAL_ORIGINS]
+    monkeypatch.setenv("AGRISCOUT_CORS_ORIGINS", "*")
+    assert cors_origins() == ["*"]
+
+
+def test_browser_preflight_from_an_allowed_origin_succeeds_and_others_are_refused(db_file, monkeypatch):
+    """Runs the real middleware: the Vercel site calls the API with Authorization / X-Admin-Key headers."""
+    import importlib
+
+    monkeypatch.setenv("AGRISCOUT_CORS_ORIGINS", "https://agriscout.vercel.app")
+    from fastapi.testclient import TestClient
+
+    from backend.app import main
+
+    app = importlib.reload(main).app
+    c = TestClient(app)
+    hdr = {"Access-Control-Request-Method": "GET", "Access-Control-Request-Headers": "authorization,x-admin-key"}
+    ok = c.options("/api/farmer/me", headers={"Origin": "https://agriscout.vercel.app", **hdr})
+    assert ok.status_code == 200 and ok.headers["access-control-allow-origin"] == "https://agriscout.vercel.app"
+    bad = c.options("/api/farmer/me", headers={"Origin": "https://evil.example", **hdr})
+    assert "access-control-allow-origin" not in bad.headers
