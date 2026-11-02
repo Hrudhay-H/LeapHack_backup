@@ -10,7 +10,7 @@ AgriScout takes a drone survey of a field and returns a ranked list of places a 
 
 This is a working end-to-end **prototype**. It runs on real public drone imagery, but **there is no pest-labelled aerial validation**, and no accuracy figure for pest detection is claimed anywhere.
 
-- The two "anomaly" farms in the survey-day simulator use **real rice imagery with simulated stress patches blended in**. The patches are not real pest or disease damage, and every screen and PDF says so.
+- Every image in the demo is **real drone imagery** from public datasets. The crop damage on the demo's rice farms is **simulated** (drawn to look like field damage and blended into the real bands). It is not real pest or disease damage, and every screen and PDF says so.
 - On real data the vegetation-index signal was the dependable one. The pretrained visual-texture model (PatchCore) was near chance and is labelled **experimental** everywhere. See [Evidence and limits](#evidence-and-limits).
 - No drone was flown and no scout has used it. SMS is a mock gateway, Kannada text is unreviewed, and the demo farmers are fictional.
 
@@ -75,7 +75,7 @@ npm --prefix frontend install             # frontend dependencies
 uv run python scripts/bootstrap_demo.py
 ```
 
-This generates four synthetic fields, fits the PatchCore reference on the two normal ones, runs the pipeline on a stressed and a healthy field, and seeds the database with fictional farmers, operators and reports. Add `--reset` to delete and rebuild the database.
+This installs the prepared rice imagery from `deploy/demo-data/`, fits the visual check's reference on a held-out real block, analyses each farm's earlier survey, and seeds the database with fictional farmers, operators and reports. Add `--reset` to delete and rebuild the database (stop the API first, or it keeps using the old file).
 
 ### Run
 
@@ -94,19 +94,19 @@ All logins are fictional demo data. One-time codes are shown in the **Demo phone
 
 | Who | How to sign in | What you see |
 |---|---|---|
-| Farmer `MDY-001` (Kannada, smartphone) | `/farmer`, ID `MDY-001`, send code, read it from the Demo phone | Synthetic stressed paddy field with 4 hotspots, scout verdict buttons, PDF |
-| Farmer `MDY-003` (English) | `/farmer`, ID `MDY-003` | Real UAV maize mosaic, "no significant anomaly" (needs the optional maize data) |
+| Farmer `MDY-001` (Kannada, smartphone) | `/farmer`, ID `MDY-001`, send code, read it from the Demo phone | Real rice imagery with 1 hotspot from a survey three weeks ago, scout verdict buttons, PDF |
+| Farmer `MDY-003` (English) | `/farmer`, ID `MDY-003` | Nothing yet: this farm gets its first survey from the simulator. With the optional maize data prepared, also a real maize field ("no significant anomaly") |
 | Keypad-phone farmer `MDY-002` | Operator portal `/operator`: operator `OP-MAD`, PIN `1234`, look up `MDY-002` | The assisted flow below |
 | Admin | `/admin` (demo admin key is prefilled) | Run analyses, send SMS, view the report access log |
 
 **Assisted flow** (`/operator`): operator signs in, finds the farmer by ID (sees only a masked phone number), requests a code, the farmer reads out the code from their phone, the operator enters it and gets that one report for five minutes. Every view and download is logged on the admin page.
 
-**Survey-day simulator** (`/admin` then *Survey-day simulator*): runs a new survey for three farms through the real pipeline. Farm 1 is untouched real rice imagery (result: no anomaly). Farms 2 and 3 have simulated stress patches added (results: 1 and 2 hotspots). Each farm gets a PDF report and an SMS; each farmer's dashboard then opens on the new survey. It needs the rice dataset prepared once, see [Rice survey-day simulator](#rice-survey-day-simulator). Use *Reset simulation* to run it again.
+**Survey-day simulator** (`/admin` then *Survey-day simulator*): the next drone survey arrives for three farms and runs through the real pipeline. Kikkeri (`MDY-001`) already has a survey on record, and its problem has now grown, spread and been joined by a new patch. Maddur (`MDY-002`) was clean last time and now has an elongated strip and a patch. Pandavapura (`MDY-003`) is a newly added farm with a clean first survey. Each farm gets a PDF report and an SMS, and each farmer's dashboard opens on the new survey with the earlier one still selectable. *Reset simulation* removes the new surveys and returns every farm to its history. No extra data is needed: the imagery ships in `deploy/demo-data/`.
 
 ## How detection works
 
 1. **Align and check.** RGB and multispectral rasters are warped onto one metric grid (CRS and resolution are checked, not assumed). Quality checks cover no-data and saturation inside the field boundary. A survey with **no multispectral file** is handled as RGB-only (see below).
-2. **Crop mask.** Vegetated pixels inside the field. The NDVI cutoff is chosen from the survey itself (Otsu, bounded 0.20 to 0.40) because absolute NDVI differs by sensor and exposure. Small enclosed gaps are filled so a badly stressed patch inside a plot is not dropped as non-crop.
+2. **Crop mask.** Vegetated pixels inside the field. The NDVI cutoff is chosen from the survey itself (Otsu, bounded 0.20 to 0.40) because absolute NDVI differs by sensor and exposure. Gaps narrower than 0.4 m are closed and small enclosed gaps (under 20 m²) are filled, so a badly damaged patch inside a plot is not dropped as non-crop; a damaged patch that opens wide onto a path still looks like bare ground and can be masked out.
 3. **Vegetation-index baseline (the dependable signal).** NDVI and NDRE are smoothed and scored against the **median and spread of the same field** (robust z-score). A floor means nothing is flagged below a set deviation, so a healthy field returns *"no significant anomaly"* instead of a forced top few percent.
 4. **Visual texture check (experimental).** A pretrained ImageNet ResNet-18 plus a PatchCore-style memory bank of *normal* canopy, calibrated on held-out normal imagery. Scores within 1 m of a field boundary are discarded (the model reacts to empty surroundings there).
 5. **Fusion.** Weighted average, **70% index and 30% texture** (provisional; chosen after seeing results on the planted patches, so not independent evidence). A single-branch fallback applies if one is missing.
@@ -124,7 +124,7 @@ A survey is a folder, for example `data/raw/<name>/`:
 | `multispectral.tif` | no | 4 bands in order **red, green, red-edge, NIR**, reflectance 0 to 1 |
 | `field_mask.tif` | no | 1 inside the field boundary; defaults to the whole raster |
 | `survey.json` | no | metadata; set `"reflectance_calibrated": true` **only if true**; without it every multispectral hotspot is rated LOW confidence |
-| `truth_mask.tif` | no | known stress locations (used only by the self-check on synthetic or simulated data) |
+| `truth_mask.tif` | no | known stress locations (used only by the self-check on simulated data) |
 
 ### Pipeline outputs
 
@@ -134,9 +134,9 @@ Written per run to `data/runs/<id>/`: `rgb.png`, `ndvi.png`, `ndre.png`, `spectr
 
 ```bash
 # fit the normal reference for the visual check on NORMAL fields only
-uv run python -m agriscout_ml.pipeline train --reference data/raw/synthetic/ref1 data/raw/synthetic/ref2 --model data/models/patchcore.pt
+uv run python -m agriscout_ml.pipeline train --reference data/raw/sim/sim_ref --model data/models/sim_rice.pt
 # analyse a survey
-uv run python -m agriscout_ml.pipeline run --survey data/raw/synthetic/stressed --model data/models/patchcore.pt --out data/runs/stressed --survey-id stressed
+uv run python -m agriscout_ml.pipeline run --survey data/raw/sim/sim_b --model data/models/sim_rice.pt --out data/runs/example --survey-id example
 # omit --model to run the index baseline alone
 ```
 
@@ -152,8 +152,8 @@ ml/agriscout_ml/        analysis pipeline
   hotspots.py           fusion, polygons, priority, confidence, pattern hints
   pipeline.py           train / run entry points and stage reporting
   render.py             PNG layers and overlays
-  synth.py              synthetic survey generator (for tests and the base demo)
-  simulate.py           survey-day simulator inputs: real rice imagery + simulated stress
+  synth.py              fully synthetic survey generator (used by the unit tests only)
+  simulate.py           the demo's farms: real rice imagery + simulated crop damage, at two survey dates
   mosaic_blb.py         stitches the rice dataset's patches into orthomosaics
   blb_index.py          extracts the rice dataset and builds its patch index
   convert_zenodo_maize.py   converts the maize orthomosaics to the survey layout
@@ -163,10 +163,10 @@ ml/tests/               unit tests and the browser end-to-end test
 backend/app/            FastAPI app: routes, models, security, ingest, reports, sms, simulation, seed
 backend/tests/          API flow tests
 frontend/src/           React app: pages, components, i18n (English, Kannada), API client
-scripts/bootstrap_demo.py   one-command demo setup (add --sim for the rice survey-day simulator)
+scripts/bootstrap_demo.py   one-command demo setup (needs no downloads)
 scripts/docker-entrypoint.sh   container start script
 Dockerfile              builds the API image (CPU PyTorch, Chromium, baked demo)
-deploy/demo-data/       prepared rice survey blocks for the simulator (about 21 MB, CC BY 4.0, attribution in each survey.json)
+deploy/demo-data/       the demo's rice imagery: six survey blocks (about 30 MB, CC BY 4.0, attribution in each survey.json)
 docs/img/               README screenshots
 docs/pitch-deck/        pitch deck slide source
 docs/DEPLOY.md          deploying to Vercel and a container host
@@ -175,7 +175,7 @@ data/experiments/       small result files that back the README numbers (everyth
 
 ## Data
 
-Datasets, trained models, run outputs and the database are **not committed**. Everything under `data/` except `data/experiments/` is generated or downloaded. The base demo needs none of it (`scripts/bootstrap_demo.py` makes synthetic fields). The one exception is a small prepared subset of the rice dataset (four survey blocks, about 21 MB, with the dataset's attribution and a note of the changes made in each `survey.json`) shipped in `deploy/demo-data/` so the survey-day simulator works without the 3.8 GB download. The real datasets below are optional and each has its own licence.
+Datasets, trained models, run outputs and the database are **not committed**. Everything under `data/` except `data/experiments/` is generated or downloaded. The demo needs none of it. The one exception is a small prepared subset of the rice dataset (six survey blocks cut from one real mosaic, about 30 MB, with the dataset's attribution and a note of the changes made in each `survey.json`) shipped in `deploy/demo-data/`, so the whole demo works without the 3.8 GB download. The real datasets below are optional and each has its own licence.
 
 | Dataset | Used for | Licence | Size | Status |
 |---|---|---|---|---|
@@ -186,7 +186,7 @@ Datasets, trained models, run outputs and the database are **not committed**. Ev
 
 Use v2.1 of the maize set: an earlier release had the red-edge and NIR band labels swapped.
 
-### Maize field (optional demo farm `MDY-003`)
+### Maize field (optional demo farm `FARM-004`, owned by `MDY-003`)
 
 ```bash
 # 1. download from https://doi.org/10.5281/zenodo.22062459 (v2.1): 01_orthomosaics.zip and 02_processed_patches.zip
@@ -200,7 +200,7 @@ uv run python -m agriscout_ml.convert_zenodo_maize data/raw/zenodo_maize/ortho/c
 
 # 3. fit on one field, analyse the other, then re-seed
 uv run python -m agriscout_ml.pipeline train --reference data/raw/maize_water --model data/models/maize.pt
-uv run python -m agriscout_ml.pipeline run --survey data/raw/maize_rust --model data/models/maize.pt --out data/runs/maize_rust --survey-id FARM-003-S01
+uv run python -m agriscout_ml.pipeline run --survey data/raw/maize_rust --model data/models/maize.pt --out data/runs/maize_rust --survey-id FARM-004-S01
 uv run python scripts/bootstrap_demo.py --reset
 ```
 
@@ -208,7 +208,7 @@ Note the source metadata lists nodata as -10000 but the pixels do not use it; th
 
 ### Rice survey-day simulator
 
-**Quick path (no download):** `uv run python scripts/bootstrap_demo.py --sim` installs the shipped blocks from `deploy/demo-data/` and fits the reference.
+**You do not need this to run the demo:** `scripts/bootstrap_demo.py` installs the shipped blocks from `deploy/demo-data/`. The steps below regenerate them from the full dataset.
 
 **From the full dataset:** the dataset's files are on Google Drive and scripted downloads are rate-limited, so download the folder **in a browser** from the link in its [figshare record](https://doi.org/10.6084/m9.figshare.26955862) and place the zip parts in `data/raw/blb/drive/`.
 
@@ -217,7 +217,9 @@ uv run python -m agriscout_ml.blb_index --zips "data/raw/blb/drive/*.zip"   # ex
 uv run python -m agriscout_ml.simulate data/raw/sim --train data/models/sim_rice.pt
 ```
 
-The second command stitches the healthy site into a mosaic, splits it into four blocks (one reference block used only to fit the visual check, one untouched, two with simulated stress), and writes the surveys the simulator uses. Then open `/admin`, *Survey-day simulator*, *Start survey day*.
+The second command stitches the healthy site into a mosaic, splits it into four blocks (one reference block used only to fit the visual check, three farms), draws the simulated damage, and writes each farm's earlier and latest survey. Copy `data/raw/sim` over `deploy/demo-data/sim` to update the shipped set, then run `scripts/bootstrap_demo.py --reset`.
+
+The damage is generated, not photographed: irregular noise-warped outlines, severity that varies within a patch, speckled thinning where bare ground from the same image shows through, small satellite spots around a growing patch, and a canopy colour shift (red and red-edge up, NIR down) strong enough to be plainly visible. It stays inside the crop plots and fades at their edges. Its strength was chosen for how it looks, not for how well the pipeline finds it.
 
 ### Cashew evaluation (optional)
 
@@ -229,7 +231,7 @@ Numbers are AUROC (0.5 is chance, 1.0 is perfect) from `ml/experiments/`, with r
 
 | Test | Data and labels | Result |
 |---|---|---|
-| Planted stress on real rice | Top-down real plots; 7 simulated patches over 2 farms | **3 of 7 found**, all strong (severity 0.7 or more); nearly every flagged pixel inside a patch; mild and small patches missed |
+| Simulated damage on real rice (the demo farms) | Top-down real plots; simulated patches at two survey dates | Latest surveys: Kikkeri 2 of 4 patches at least 30% flagged (34% of all simulated damage), Maddur 2 of 2 (76%); 99 to 100% of flagged area inside a simulated patch. Kikkeri's earlier survey: one hotspot over 15% of the patch. The tiny satellite spots were missed. |
 | Maize, two real fields | Top-down; labels derived from the vegetation index | Index 0.78 to 0.94; VARI 0.63 to 0.64; visual check 0.56 to 0.66 |
 | Rice blight severity | Top-down; expert plot-level labels, high vs low severity | Index 0.64 to 0.65; VARI 0.59; visual check 0.54 |
 | Cashew | **Close-range, oblique (not aerial)**; human-drawn boxes | Visual check 0.65 to 0.73; VARI 0.61 to 0.72 |
@@ -282,18 +284,18 @@ SMS is a mock outbox. Real Indian SMS needs a DLT-registered sender ID and pre-a
 ## Testing
 
 ```bash
-uv run pytest ml/tests backend/tests -q       # 18 unit and API-flow tests
+uv run pytest ml/tests backend/tests -q       # 23 unit and API-flow tests (includes a full survey day through the API, about 10 s)
 ```
 
-The browser end-to-end test (36 checks: login, verdicts, PDFs, admin, the survey-day simulator, SMS) needs both servers running, the demo seeded, and the optional maize and rice data prepared:
+The browser end-to-end test (37 checks: login, verdicts, PDFs, admin, the survey-day simulator, SMS) needs both servers running and the demo seeded. Its last section also needs the optional maize data prepared:
 
 ```bash
 uv run --with requests --with pypdfium2 python ml/tests/e2e_ui.py data/e2e
 ```
 
-It leaves the database changed (it records a verdict and runs analyses), so re-run `scripts/bootstrap_demo.py --reset` afterwards.
+It leaves the database changed (it records a verdict and runs analyses), so afterwards stop the API, run `scripts/bootstrap_demo.py --reset`, and start the API again.
 
-Unit tests cover the plumbing and the no-false-alarm behaviour on synthetic fields. They do **not** measure real pest-detection accuracy.
+Unit tests cover the plumbing, the crop mask and the damage generator on synthetic fields. They do **not** measure real pest-detection accuracy.
 
 ## Deploying
 

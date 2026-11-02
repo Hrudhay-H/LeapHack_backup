@@ -1,31 +1,33 @@
 <section id="survey-day" data-transition="fade" style="background:#E9EDE7;color:#12231F;font-family:'Public Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:28px">
-<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A0E;font-weight:500">Survey day · real imagery, simulated stress</p>
-<h2 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.05;letter-spacing:-1px;color:#12231F">One survey day, three farms</h2>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A0E;font-weight:500">Survey day · real imagery, simulated damage</p>
+<h2 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.05;letter-spacing:-1px;color:#12231F">The next survey, three farms</h2>
 <div style="display:flex;gap:48px;align-items:flex-start">
 <div style="display:flex;flex-direction:column;gap:12px;flex:1">
-<img src="/_blob/10160b57d2625b205f7357b6c3f8746b" alt="Nine real rice plots, no hotspots flagged" style="width:330px;height:400px;object-fit:cover;border:1px solid #C7D0C8">
+<img src="/_blob/310d74242928fbfbced2b0c4253d9bf9" alt="Nine real rice plots, no hotspots flagged" style="width:330px;height:400px;object-fit:cover;border:1px solid #C7D0C8">
 <p style="font-size:32px;font-weight:700;line-height:1.15;color:#12231F">Pandavapura Paddy Plot</p>
 <p style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#12231F">0 hotspots</p>
-<p style="font-size:24px;line-height:1.4;color:#4B5A54">Real imagery, untouched. “No significant anomaly.”</p>
+<p style="font-size:24px;line-height:1.4;color:#4B5A54">First survey. Real imagery, untouched. “No significant anomaly.”</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:12px;flex:1">
-<img src="/_blob/7933ea7de92d3a1b2f8f1905776d4358" alt="Nine real rice plots with one hotspot numbered 1 in the centre plot" style="width:330px;height:400px;object-fit:cover;border:1px solid #C7D0C8">
-<p style="font-size:32px;font-weight:700;line-height:1.15;color:#12231F">Kikkeri Paddy Plot B</p>
-<p style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#A44A0E">1 hotspot</p>
-<p style="font-size:24px;line-height:1.4;color:#4B5A54">3 simulated patches added. Found the large, severe one.</p>
-</div>
-<div style="display:flex;flex-direction:column;gap:12px;flex:1">
-<img src="/_blob/344710aec5de5369bc44b58189342479" alt="Nine real rice plots with two numbered hotspots in the upper plots" style="width:330px;height:400px;object-fit:cover;border:1px solid #C7D0C8">
-<p style="font-size:32px;font-weight:700;line-height:1.15;color:#12231F">Maddur Paddy Plot 2</p>
+<img src="/_blob/eaa86e13a0b651b72e11b7794f0b1580" alt="Nine real rice plots with a large damaged patch numbered 1 and a smaller one numbered 2" style="width:330px;height:400px;object-fit:cover;border:1px solid #C7D0C8">
+<p style="font-size:32px;font-weight:700;line-height:1.15;color:#12231F">Kikkeri Paddy Plot A</p>
 <p style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#A44A0E">2 hotspots</p>
-<p style="font-size:24px;line-height:1.4;color:#4B5A54">4 simulated patches added. Found 2 of 4.</p>
+<p style="font-size:24px;line-height:1.4;color:#4B5A54">Was 1 hotspot. The patch grew and spread.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;flex:1">
+<img src="/_blob/6180738472828138c232d7c5049f12e2" alt="Nine real rice plots with an elongated strip numbered 1 and a round patch numbered 2" style="width:330px;height:400px;object-fit:cover;border:1px solid #C7D0C8">
+<p style="font-size:32px;font-weight:700;line-height:1.15;color:#12231F">Maddur Paddy Plot</p>
+<p style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:44px;font-weight:700;line-height:1.1;color:#A44A0E">2 hotspots</p>
+<p style="font-size:24px;line-height:1.4;color:#4B5A54">Was clean. New strip and patch found.</p>
 </div>
 </div>
 <p style="position:absolute;left:128px;bottom:64px;width:1000px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4B5A54">AgriScout AI · Problem 4</p>
 <p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4B5A54">06 / 14</p>
-<aside>Live demo cue: open /admin, then Survey-day simulator, then Start survey day. The three farms run through quality checks, analysis, hotspot extraction, a PDF report and an SMS to the farmer, in about ten seconds.
+<aside>Live demo cue: open /admin, then Survey-day simulator, then Start survey day. The next survey arrives for three farms and runs through quality checks, analysis, hotspot extraction, a PDF report and an SMS to the farmer, in about ten seconds. Each farmer's dashboard then opens on the new survey, with the earlier one still selectable.
 
-What is real and what is simulated, say it plainly. The imagery is real: a rice research station from a public UAV dataset (CC BY 4.0), stitched from its patches. Farm 1 is an untouched real block and the pipeline correctly finds nothing. Farms 2 and 3 have stress patches blended into the real bands at known locations. They are not real pest damage. We did this because the real blighted plots in that dataset looked the same as the grass around them in our analysis, so there was no real anomaly this pipeline could find.
+The story. Kikkeri already had a survey on record three weeks ago with one low-priority hotspot; the problem has now grown, spread to small satellite spots and been joined by a new patch. Maddur was clean last time and now has an elongated strip and a patch. Pandavapura is a newly added farm with a clean first survey.
 
-The result is mixed and we show it as it is: 3 of 7 planted patches found, all of them strong ones; the mild and small patches were missed. Nearly every pixel we flagged was inside a planted patch, so false alarms were rare. Hotspots show LOW confidence because the dataset does not state its radiometric calibration.</aside>
+What is real and what is simulated, say it plainly. The imagery is real: a rice research station from a public UAV dataset (CC BY 4.0), cut into blocks. The damage is simulated: we drew irregular, patchy damage with thinning into the real bands at known locations, so we can check what the pipeline finds and misses. It is not real pest damage. We did this because the real blighted plots in that dataset looked the same as the grass around them in our analysis, so there was no real anomaly this pipeline could find.
+
+The result, as it is. Kikkeri: 2 of 4 simulated patches had at least 30 percent of their area flagged, and 34 percent of all simulated damage was flagged; the two small satellite spots were missed. Maddur: 2 of 2, and 76 percent of the damage flagged. About 99 to 100 percent of the flagged area lies inside a simulated patch, so false alarms were rare. Hotspots show LOW confidence because the dataset does not state its radiometric calibration. Damage strength was chosen so it is clearly visible in RGB, not tuned to the detector.</aside>
 </section>

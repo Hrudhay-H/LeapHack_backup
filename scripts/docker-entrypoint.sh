@@ -17,7 +17,7 @@ fi
 # A volume mounted at /app/data starts empty and hides the demo baked into the image: rebuild it (about a minute).
 if [ ! -f data/agriscout.db ]; then
   echo "No database found in /app/data; building the demo data..."
-  python scripts/bootstrap_demo.py --sim
+  python scripts/bootstrap_demo.py
 fi
 
 exec python -m uvicorn backend.app.main:app --host 0.0.0.0 --port "${PORT:-8000}"

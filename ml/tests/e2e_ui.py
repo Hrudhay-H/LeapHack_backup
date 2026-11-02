@@ -106,6 +106,69 @@ with sync_playwright() as p:
     check("view-report delivers the PDF to a new tab", viewed, f"url={viewer.url[:30]} downloads={len(viewer_downloads)}")
     viewer.close()
 
+    # ---- survey-day simulator: three farms, real imagery, one clean and two with simulated stress
+    ADMIN = {"X-Admin-Key": "demo-admin"}
+    sim = ctx.new_page()
+    sim.on("response", lambda r: problems.append(f"HTTP {r.status} {r.request.method} {r.url}") if r.status >= 400 else None)
+    sim.goto(f"{WEB}/admin")
+    sim.get_by_role("link", name="Survey-day simulator").click()
+    sim.wait_for_url("**/admin/simulate")
+    sim.get_by_role("button", name="Start survey day").wait_for()
+    sim.get_by_text("New survey").first.wait_for(timeout=15000)
+    check("simulator: three farm cards listed before start", sim.get_by_text("New survey", exact=True).count() == 3)
+    sim.get_by_role("button", name="Start survey day").click()
+    t1 = time.time()
+    sim.get_by_text("Done. Open the reports below").wait_for(timeout=420000)
+    check("simulator: all three surveys finish", True, f"{time.time() - t1:.0f}s")
+    sim.wait_for_timeout(1500)
+    sim.screenshot(path=str(OUT / "simulator_done.png"), full_page=True)
+    st = requests.get(f"{WEB}/api/admin/sim/status", headers=ADMIN, timeout=20).json()
+    res = {f["farm_id"]: f for f in st["farms"]}
+    check("simulator: the new farm (untouched real imagery) has no anomaly", res["FARM-003"]["result"]["hotspots"] == 0, str(res["FARM-003"]["result"]["hotspots"]))
+    check("simulator: Kikkeri's grown problem is flagged", (res["FARM-001"]["result"]["hotspots"] or 0) >= 1, str(res["FARM-001"]["result"]["hotspots"]))
+    check("simulator: Maddur's new damage is flagged", (res["FARM-002"]["result"]["hotspots"] or 0) >= 1, str(res["FARM-002"]["result"]["hotspots"]))
+    check("simulator: 'no significant anomaly' and 'flagged' wording on cards",
+          sim.get_by_text("No significant anomaly detected.").count() == 1 and sim.get_by_text("flagged for ground inspection").count() == 2)
+    check("simulator: self-check shown only for the two stressed farms", sim.get_by_text("Self-check against the simulated patches").count() == 2)
+    check("simulator: SMS sent to all three farmers", all(res[k]["result"]["notified"] for k in res))
+    check("simulator: keypad-phone farmer's SMS is Kannada", "ನಮಸ್ಕಾರ" in (res["FARM-002"]["result"]["sms"] or ""))
+    import pypdfium2 as pdfium
+    pdf_text = {}
+    for fid, f in res.items():
+        rid = f["result"]["report_id"]
+        b = requests.get(f"{WEB}/api/admin/reports/{rid}", headers=ADMIN, timeout=60).content
+        (OUT / f"{rid}.pdf").write_bytes(b)
+        pdf_text[fid] = " ".join("".join(pg.get_textpage().get_text_range() for pg in pdfium.PdfDocument(str(OUT / f"{rid}.pdf"))).split())
+    check("simulator: three real PDF reports", all(len(pdf_text[k]) > 300 for k in pdf_text))
+    check("simulator: stressed farms' PDFs say SIMULATED STRESS, clean farm's does not",
+          "SIMULATED STRESS" in pdf_text["FARM-001"] and "SIMULATED STRESS" in pdf_text["FARM-002"] and "SIMULATED STRESS" not in pdf_text["FARM-003"])
+    check("simulator: clean farm's PDF states no significant anomaly", "No significant anomaly was detected" in pdf_text["FARM-003"])
+    check("simulator: stressed farms' PDFs list areas to inspect", all("Areas to inspect" in pdf_text[k] and "Pattern consistent" in pdf_text[k] or "pattern" in pdf_text[k].lower() for k in ("FARM-001", "FARM-002")))
+
+    # farmer sees the new survey first, with a survey selector
+    fp = ctx.new_page()
+    fp.goto(f"{WEB}/farmer")
+    fp.get_by_label("Farmer ID").fill("MDY-001")
+    fp.get_by_role("button", name="Send code to my phone").click()
+    fp.get_by_label("6-digit code").wait_for()
+    fp.get_by_label("6-digit code").fill(latest_otp("9000000001"))
+    fp.get_by_role("button", name="Verify and continue").click()
+    fp.wait_for_url("**/farmer/dashboard")
+    fp.get_by_text("Real imagery with simulated stress.").wait_for(timeout=30000)
+    check("farmer dashboard opens on the new survey with the simulated-stress banner", True)
+    check("farmer dashboard has a survey selector with the old and new surveys", fp.locator("select option").count() >= 2, str(fp.locator("select option").count()))
+    fp.screenshot(path=str(OUT / "farmer_new_survey.png"), full_page=True)
+
+    # reset returns everything to the pre-simulation state
+    sim.get_by_role("button", name="Reset simulation").click()
+    sim.get_by_role("button", name="Start survey day").wait_for(timeout=30000)
+    sim.wait_for_timeout(1500)
+    st2 = requests.get(f"{WEB}/api/admin/sim/status", headers=ADMIN, timeout=20).json()
+    check("simulator: reset clears all three surveys", not st2["started"] and all(f["status"] == "NOT_STARTED" for f in st2["farms"]))
+    ov = requests.get(f"{WEB}/api/admin/overview", headers=ADMIN, timeout=20).json()
+    check("simulator: seeded earlier surveys survive the reset", {"FARM-001-S01", "FARM-002-S01"} <= {r["survey_id"] for r in ov["surveys"]})
+    check("simulator: reset removes the simulated surveys and keeps the seeded history", not any(r["survey_id"] in ("FARM-001-S02", "FARM-002-S02", "FARM-003-S01") for r in ov["surveys"]))
+
     # ---- the verdict must appear in a freshly generated PDF? (reports are generated once, so it should NOT)
     # ---- admin: run a new analysis, then SMS, then access log
     admin = ctx.new_page()
@@ -171,68 +234,6 @@ with sync_playwright() as p:
     check("real field: PDF says maize crop, not paddy", "Maize" in text or "maize" in text)
     rsms = requests.get(f"{WEB}/api/dev/sms", params={"mobile": "9000000003"}, timeout=10).json()
     check("real field: PDF states no significant anomaly", "No significant anomaly was detected" in text)
-
-    # ---- survey-day simulator: three farms, real imagery, one clean and two with simulated stress
-    ADMIN = {"X-Admin-Key": "demo-admin"}
-    sim = ctx.new_page()
-    sim.on("response", lambda r: problems.append(f"HTTP {r.status} {r.request.method} {r.url}") if r.status >= 400 else None)
-    sim.goto(f"{WEB}/admin")
-    sim.get_by_role("link", name="Survey-day simulator").click()
-    sim.wait_for_url("**/admin/simulate")
-    sim.get_by_role("button", name="Start survey day").wait_for()
-    sim.get_by_text("Simulated input").first.wait_for(timeout=15000)
-    check("simulator: three farm cards listed before start", sim.get_by_text("Simulated input").count() == 3)
-    sim.get_by_role("button", name="Start survey day").click()
-    t1 = time.time()
-    sim.get_by_text("Done. Open the reports below").wait_for(timeout=420000)
-    check("simulator: all three surveys finish", True, f"{time.time() - t1:.0f}s")
-    sim.wait_for_timeout(1500)
-    sim.screenshot(path=str(OUT / "simulator_done.png"), full_page=True)
-    st = requests.get(f"{WEB}/api/admin/sim/status", headers=ADMIN, timeout=20).json()
-    res = {f["farm_id"]: f for f in st["farms"]}
-    check("simulator: farm 1 (untouched real imagery) has no anomaly", res["FARM-101"]["result"]["hotspots"] == 0, str(res["FARM-101"]["result"]["hotspots"]))
-    check("simulator: farm 2 has hotspots", (res["FARM-102"]["result"]["hotspots"] or 0) >= 1, str(res["FARM-102"]["result"]["hotspots"]))
-    check("simulator: farm 3 has hotspots", (res["FARM-103"]["result"]["hotspots"] or 0) >= 1, str(res["FARM-103"]["result"]["hotspots"]))
-    check("simulator: 'no significant anomaly' and 'flagged' wording on cards",
-          sim.get_by_text("No significant anomaly detected.").count() == 1 and sim.get_by_text("flagged for ground inspection").count() == 2)
-    check("simulator: self-check shown only for the two stressed farms", sim.get_by_text("Self-check against the added patches").count() == 2)
-    check("simulator: SMS sent to all three farmers", all(res[k]["result"]["notified"] for k in res))
-    check("simulator: keypad-phone farmer's SMS is Kannada", "ನಮಸ್ಕಾರ" in (res["FARM-103"]["result"]["sms"] or ""))
-    import pypdfium2 as pdfium
-    pdf_text = {}
-    for fid, f in res.items():
-        rid = f["result"]["report_id"]
-        b = requests.get(f"{WEB}/api/admin/reports/{rid}", headers=ADMIN, timeout=60).content
-        (OUT / f"{rid}.pdf").write_bytes(b)
-        pdf_text[fid] = " ".join("".join(pg.get_textpage().get_text_range() for pg in pdfium.PdfDocument(str(OUT / f"{rid}.pdf"))).split())
-    check("simulator: three real PDF reports", all(len(pdf_text[k]) > 300 for k in pdf_text))
-    check("simulator: stressed farms' PDFs say SIMULATED STRESS, clean farm's does not",
-          "SIMULATED STRESS" in pdf_text["FARM-102"] and "SIMULATED STRESS" in pdf_text["FARM-103"] and "SIMULATED STRESS" not in pdf_text["FARM-101"])
-    check("simulator: clean farm's PDF states no significant anomaly", "No significant anomaly was detected" in pdf_text["FARM-101"])
-    check("simulator: stressed farms' PDFs list areas to inspect", all("Areas to inspect" in pdf_text[k] and "Pattern consistent" in pdf_text[k] or "pattern" in pdf_text[k].lower() for k in ("FARM-102", "FARM-103")))
-
-    # farmer sees the new survey first, with a survey selector
-    fp = ctx.new_page()
-    fp.goto(f"{WEB}/farmer")
-    fp.get_by_label("Farmer ID").fill("MDY-001")
-    fp.get_by_role("button", name="Send code to my phone").click()
-    fp.get_by_label("6-digit code").wait_for()
-    fp.get_by_label("6-digit code").fill(latest_otp("9000000001"))
-    fp.get_by_role("button", name="Verify and continue").click()
-    fp.wait_for_url("**/farmer/dashboard")
-    fp.get_by_text("Real imagery with simulated stress.").wait_for(timeout=30000)
-    check("farmer dashboard opens on the new survey with the simulated-stress banner", True)
-    check("farmer dashboard has a survey selector with the old and new surveys", fp.locator("select option").count() >= 2, str(fp.locator("select option").count()))
-    fp.screenshot(path=str(OUT / "farmer_new_survey.png"), full_page=True)
-
-    # reset returns everything to the pre-simulation state
-    sim.get_by_role("button", name="Reset simulation").click()
-    sim.get_by_role("button", name="Start survey day").wait_for(timeout=30000)
-    sim.wait_for_timeout(1500)
-    st2 = requests.get(f"{WEB}/api/admin/sim/status", headers=ADMIN, timeout=20).json()
-    check("simulator: reset clears all three surveys", not st2["started"] and all(f["status"] == "NOT_STARTED" for f in st2["farms"]))
-    ov = requests.get(f"{WEB}/api/admin/overview", headers=ADMIN, timeout=20).json()
-    check("simulator: reset removes the simulated surveys from the admin overview", not any(r["survey_id"].startswith("FARM-10") for r in ov["surveys"]))
 
     browser.close()
 

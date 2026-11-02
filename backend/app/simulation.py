@@ -1,9 +1,14 @@
-"""Survey-day simulation: three farms get a new survey from REAL imagery, one untouched and two with SIMULATED stress.
+"""Survey-day simulation: the next drone survey arrives for three farms, built from REAL imagery with SIMULATED stress.
 
-Imagery comes from `agriscout_ml.simulate` (healthy research-station site of the Thai UAV rice dataset, CC BY 4.0).
-The stress patches in farms 2 and 3 are injected, not real pest damage; that is recorded in each survey's
-metadata and repeated in the UI and PDF. Prepare the imagery once with:
-  uv run python -m agriscout_ml.simulate data/raw/sim --train data/models/sim_rice.pt
+Imagery comes from `agriscout_ml.simulate` (the healthy site of the Thai UAV rice dataset, CC BY 4.0). Each farm already has
+history from the seed, except the newly added one:
+
+  FARM-001  second survey: the patch found last time has grown and spread, and a new one has appeared
+  FARM-002  second survey: clean last time, it now has an elongated strip and a patch
+  FARM-003  first survey for a newly added farm: untouched real imagery
+
+The stress is added to real imagery, not real pest damage. That is recorded in each survey's metadata and repeated in the
+UI and PDF. Prepare the imagery once with `uv run python scripts/bootstrap_demo.py`.
 """
 from __future__ import annotations
 
@@ -30,15 +35,11 @@ STAGES = [
 ]
 
 SIM_FARMS = [
-    {"farm_id": "FARM-101", "farmer_id": "MDY-003", "name": "Pandavapura Paddy Plot", "dir": "sim/sim_a"},
-    {"farm_id": "FARM-102", "farmer_id": "MDY-001", "name": "Kikkeri Paddy Plot B", "dir": "sim/sim_b"},
-    {"farm_id": "FARM-103", "farmer_id": "MDY-002", "name": "Maddur Paddy Plot 2", "dir": "sim/sim_c"},
+    {"farm_id": "FARM-001", "survey_id": "FARM-001-S02", "dir": "sim/sim_b"},
+    {"farm_id": "FARM-002", "survey_id": "FARM-002-S02", "dir": "sim/sim_c"},
+    {"farm_id": "FARM-003", "survey_id": "FARM-003-S01", "dir": "sim/sim_a"},
 ]
-PREPARE_CMD = "uv run python -m agriscout_ml.simulate data/raw/sim --train data/models/sim_rice.pt"
-
-
-def _sid(farm_id: str) -> str:
-    return f"{farm_id}-S01"
+PREPARE_CMD = "uv run python scripts/bootstrap_demo.py"
 
 
 def missing_inputs() -> list[str]:
@@ -50,26 +51,24 @@ def missing_inputs() -> list[str]:
 
 def _run_all(farms: list[dict]) -> None:
     for f in farms:  # one after another: CPU-bound, and SQLite is single-writer
-        analyze_background(_sid(f["farm_id"]), str(RAW / f["dir"]), model_path=SIM_MODEL_PATH, notify=True)
+        analyze_background(f["survey_id"], str(RAW / f["dir"]), model_path=SIM_MODEL_PATH, notify=True)
 
 
 def start(session: Session, bg: BackgroundTasks) -> dict:
     miss = missing_inputs()
     if miss:
         raise HTTPException(409, f"Simulation imagery not prepared ({', '.join(miss)}). Run: {PREPARE_CMD}")
-    ids = [f["farm_id"] for f in SIM_FARMS]
-    if session.exec(select(Survey).where(Survey.farm_id.in_(ids))).first():
-        raise HTTPException(409, "A simulation already exists. Reset it first.")
+    ids = [f["survey_id"] for f in SIM_FARMS]
+    if any(session.get(Survey, i) for i in ids):
+        raise HTTPException(409, "This survey day has already run. Reset the simulation first.")
     for f in SIM_FARMS:
-        if not session.get(Farmer, f["farmer_id"]):
-            raise HTTPException(409, f"Farmer {f['farmer_id']} is missing. Run the seed first.")
-        session.merge(Farm(id=f["farm_id"], farmer_id=f["farmer_id"], name=f["name"], crop="Paddy"))
-    session.commit()
+        if not session.get(Farm, f["farm_id"]):
+            raise HTTPException(409, f"Farm {f['farm_id']} is missing. Run: {PREPARE_CMD}")
     for f in SIM_FARMS:
-        session.add(Survey(id=_sid(f["farm_id"]), farm_id=f["farm_id"], status="PROCESSING", stage="received", data_source="pending"))
+        session.add(Survey(id=f["survey_id"], farm_id=f["farm_id"], status="PROCESSING", stage="received", data_source="pending"))
     session.commit()
     bg.add_task(_run_all, SIM_FARMS)
-    return {"started": [_sid(f["farm_id"]) for f in SIM_FARMS]}
+    return {"started": ids}
 
 
 def _survey_meta(dir_: str) -> dict:
@@ -77,28 +76,43 @@ def _survey_meta(dir_: str) -> dict:
     return json.loads(p.read_text()) if p.exists() else {}
 
 
+def _context(session: Session, farm_id: str, survey_id: str) -> str:
+    earlier = [
+        s for s in session.exec(select(Survey).where(Survey.farm_id == farm_id)).all()
+        if s.id != survey_id and s.status == "COMPLETED"
+    ]
+    if not earlier:
+        return "First survey for a newly added farm."
+    last = max(earlier, key=lambda s: s.created_at)
+    n = (last.summary.get("summary") or {}).get("hotspots_detected")
+    found = "no anomaly" if n == 0 else f"{n} hotspot{'s' if n != 1 else ''}"
+    return f"Follow-up survey. The previous one ({last.created_at:%d %b %Y}) found {found}."
+
+
 def status(session: Session) -> dict:
     out = []
     for f in SIM_FARMS:
-        farmer = session.get(Farmer, f["farmer_id"])
-        sv = session.get(Survey, _sid(f["farm_id"]))
+        farm = session.get(Farm, f["farm_id"])
+        farmer = session.get(Farmer, farm.farmer_id) if farm else None
+        sv = session.get(Survey, f["survey_id"])
         planted = _survey_meta(f["dir"]).get("planted") or []
         row = {
             "farm_id": f["farm_id"],
-            "farm_name": f["name"],
-            "farmer_id": f["farmer_id"],
+            "farm_name": farm.name if farm else f["farm_id"],
+            "farmer_id": farmer.id if farmer else None,
             "farmer": farmer.name if farmer else None,
             "village": farmer.village if farmer else None,
             "language": farmer.language if farmer else None,
             "access_mode": farmer.access_mode if farmer else None,
             "input": {
                 "source": "Real UAV orthomosaic of a rice research station (Thai UAV rice dataset, CC BY 4.0)",
+                "context": _context(session, f["farm_id"], f["survey_id"]) if farm else "",
                 "simulated_stress": bool(planted),
                 "planted_patches": [
                     {"name": p.get("name"), "radius_m": p.get("radius_m"), "severity": p.get("severity")} for p in planted
                 ],
             },
-            "survey_id": sv.id if sv else None,
+            "survey_id": f["survey_id"] if sv else None,
             "status": sv.status if sv else "NOT_STARTED",
             "stage": sv.stage if sv else "",
             "error": sv.error if sv else None,
@@ -145,7 +159,8 @@ def status(session: Session) -> dict:
 
 
 def reset(session: Session) -> dict:
-    ids = [_sid(f["farm_id"]) for f in SIM_FARMS]
+    """Remove the simulated survey day; each farm returns to its seeded history."""
+    ids = [f["survey_id"] for f in SIM_FARMS]
     surveys = [s for s in (session.get(Survey, i) for i in ids) if s]
     first = min((s.created_at for s in surveys), default=None)
     reports = session.exec(select(Report).where(Report.survey_id.in_(ids))).all()
@@ -159,18 +174,13 @@ def reset(session: Session) -> dict:
     for h in session.exec(select(Hotspot).where(Hotspot.survey_id.in_(ids))).all():
         session.delete(h)
     if first is not None:
-        mobiles = [m.mobile for m in (session.get(Farmer, f["farmer_id"]) for f in SIM_FARMS) if m]
+        mobiles = [m.mobile for m in (session.get(Farmer, session.get(Farm, f["farm_id"]).farmer_id) for f in SIM_FARMS) if m]
         for m in session.exec(
             select(SmsMessage).where(SmsMessage.to_mobile.in_(mobiles), SmsMessage.kind == "NOTIFY", SmsMessage.at >= first)
         ).all():
             session.delete(m)
     for s in surveys:
         session.delete(s)
-    session.commit()
-    for f in SIM_FARMS:  # farms go too, so dashboards return to their pre-simulation state
-        farm = session.get(Farm, f["farm_id"])
-        if farm:
-            session.delete(farm)
     session.commit()
     for i in ids:
         shutil.rmtree(RUNS / i, ignore_errors=True)

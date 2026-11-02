@@ -9,8 +9,8 @@ ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data"
 RUNS = DATA / "runs"
 RAW = DATA / "raw"
-MODEL_PATH = DATA / "models" / "patchcore.pt"
-SIM_MODEL_PATH = DATA / "models" / "sim_rice.pt"
+MODEL_PATH = DATA / "models" / "sim_rice.pt"  # visual-check reference fitted on a held-out real rice block
+SIM_MODEL_PATH = MODEL_PATH
 REPORTS = DATA / "reports"
 
 DATA.mkdir(exist_ok=True)

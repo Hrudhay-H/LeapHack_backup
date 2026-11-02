@@ -24,7 +24,7 @@ docker run --rm -p 8000:8000 \
 curl http://localhost:8000/api/health        # {"ok":true}
 ```
 
-The first build downloads several GB (CPU PyTorch, Chromium) and takes a while. The image bakes in the demo: four synthetic fields, the rice survey-day simulator data from `deploy/demo-data/`, and a seeded database with reports. It needs no outbound access to start.
+The first build downloads several GB (CPU PyTorch, Chromium) and takes a while. The image bakes in the demo: the real rice imagery from `deploy/demo-data/`, each farm's earlier survey already analysed, and a seeded database with reports. It needs no outbound access to start.
 
 ### Host it
 
@@ -75,7 +75,7 @@ npx vercel --prod
 1. Copy the Vercel site's URL (for example `https://agriscout.vercel.app`).
 2. Set it as `AGRISCOUT_CORS_ORIGINS` on the API and restart the API.
 3. Open the Vercel site and check:
-   - `/farmer`: sign in as `MDY-001`, open the **Demo phone**, enter the code. You should see the stressed field with 4 hotspots.
+   - `/farmer`: sign in as `MDY-001`, open the **Demo phone**, enter the code. You should see a real rice field with one flagged patch, dated three weeks ago.
    - `/operator`: operator `OP-MAD`, PIN `1234`, farmer `MDY-002`: the assisted flow.
    - `/admin` then **Survey-day simulator**: enter your `AGRISCOUT_ADMIN_KEY`, then **Start survey day**. Three farms analyse in about ten seconds on a small instance, longer on a slow one.
 
@@ -83,8 +83,8 @@ npx vercel --prod
 
 - **It is a public demo with fictional data.** With `AGRISCOUT_DEMO=1` anyone can read any one-time code, so anyone can sign in as any demo farmer. Never put real farmer data behind it.
 - **SMS is a mock.** Real delivery needs a gateway implementation of `backend/app/sms.py`, a DLT-registered sender and approved templates.
-- **Farmer `MDY-003` has no survey until you run the simulator.** The prepared real-maize field is not shipped (it is not part of `deploy/demo-data/`); the simulator gives that farmer a rice survey.
-- **Simulated stress.** Two of the three simulator farms contain stress patches added to real imagery; every screen and PDF says so.
+- **Farmer `MDY-003` has no survey until you run the simulator,** which flies that farm's first survey. The optional real-maize field is not shipped (it is not part of `deploy/demo-data/`).
+- **Simulated damage.** The imagery is real, but the crop damage on the rice farms is generated and blended in; every screen and PDF says so.
 - Reports are rendered on Linux with Noto fonts, so their typography differs slightly from the Windows-rendered screenshots in the README.
 
 ## Troubleshooting

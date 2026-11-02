@@ -5,7 +5,7 @@ import { Banner, Button, Card, Chip, Header, TextInput } from '../components/Ui'
 
 type Overview = Awaited<ReturnType<typeof api.adminOverview>>
 
-const DIRS = ['synthetic/stressed', 'synthetic/healthy', 'maize_rust']
+const DIRS = ['sim/sim_b_prev', 'sim/sim_b', 'sim/sim_c_prev', 'sim/sim_c', 'sim/sim_a']
 const FARMS = ['FARM-001', 'FARM-002', 'FARM-003']
 
 export default function Admin() {

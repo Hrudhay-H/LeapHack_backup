@@ -52,7 +52,8 @@ def test_farmer_login_and_survey(client):
     me = client.get("/api/farmer/me", headers=h).json()
     sid = me["farms"][0]["surveys"][0]["id"]
     s = client.get(f"/api/farmer/surveys/{sid}", headers=h).json()
-    assert s["summary"]["hotspots_detected"] == 4
+    assert s["id"] == "FARM-001-S01" and s["summary"]["hotspots_detected"] >= 1  # the earlier survey already has a problem to inspect
+    assert s["data_source"] == "real_imagery_simulated_stress" and s["dataset"]["simulated_stress"]
     assert client.get(f"/api/farmer/surveys/{sid}/report", headers=h).headers["content-type"] == "application/pdf"
     assert client.get(f"/api/farmer/surveys/{sid}/layers/overlay", headers=h).status_code == 200
     assert client.get(f"/api/farmer/surveys/{sid}/layers/../../etc", headers=h).status_code in (404, 422)
@@ -170,3 +171,31 @@ def test_browser_preflight_from_an_allowed_origin_succeeds_and_others_are_refuse
     assert ok.status_code == 200 and ok.headers["access-control-allow-origin"] == "https://agriscout.vercel.app"
     bad = c.options("/api/farmer/me", headers={"Origin": "https://evil.example", **hdr})
     assert "access-control-allow-origin" not in bad.headers
+
+
+def test_simulated_survey_day_adds_a_second_survey_then_resets_to_history(client):
+    """Runs the real pipeline on the shipped imagery (about 10 s) and checks the farm history story end to end."""
+    import time
+
+    a = {"X-Admin-Key": "demo-admin"}
+    assert client.get("/api/admin/sim/status", headers=a).json()["ready"]
+    assert client.post("/api/admin/sim/start", headers=a).status_code == 200
+    assert client.post("/api/admin/sim/start", headers=a).status_code == 409  # cannot start a survey day twice
+    for _ in range(120):
+        st = client.get("/api/admin/sim/status", headers=a).json()
+        if st["finished"]:
+            break
+        time.sleep(1)
+    assert st["finished"], st
+    farms = {f["farm_id"]: f for f in st["farms"]}
+    assert all(f["status"] == "COMPLETED" for f in farms.values())
+    assert farms["FARM-003"]["result"]["hotspots"] == 0  # the new farm is clean
+    assert (farms["FARM-001"]["result"]["hotspots"] or 0) >= 1 and (farms["FARM-002"]["result"]["hotspots"] or 0) >= 1
+    assert "Follow-up" in farms["FARM-001"]["input"]["context"] and "First survey" in farms["FARM-003"]["input"]["context"]
+    ch = client.post("/api/farmer/login/request", json={"farmer_id": "MDY-001"}).json()
+    tok = client.post("/api/farmer/login/verify", json={"challenge_id": ch["challenge_id"], "otp": last_otp(client, "9000000001")}).json()["token"]
+    me = client.get("/api/farmer/me", headers={"Authorization": f"Bearer {tok}"}).json()
+    assert [x["id"] for x in me["farms"][0]["surveys"]] == ["FARM-001-S02", "FARM-001-S01"]  # newest first: history is kept
+    assert client.post("/api/admin/sim/reset", headers=a).status_code == 200
+    ids = {r["survey_id"] for r in client.get("/api/admin/overview", headers=a).json()["surveys"]}
+    assert "FARM-001-S01" in ids and "FARM-001-S02" not in ids and "FARM-003-S01" not in ids

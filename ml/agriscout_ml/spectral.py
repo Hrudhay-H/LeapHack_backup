@@ -33,13 +33,16 @@ def crop_mask(
     ndvi_min: float | None = None,
     gsd_m: float | None = None,
     max_hole_m2: float = 20.0,
+    seal_m: float = 0.2,
 ) -> np.ndarray:
     """Vegetated pixels inside the field boundary; excludes bunds, paths, water, bare soil.
 
     ndvi_min=None picks the vegetation/background split from the survey itself (Otsu on NDVI inside the field,
     bounded to 0.20..0.40) because absolute NDVI differs between sensors and exposures. Enclosed gaps smaller than
     max_hole_m2 are filled back in, so a badly stressed patch inside a crop block (very low NDVI) is not dropped
-    as 'not crop'; stressed patches touching a path or the boundary cannot be told apart from bare ground.
+    as 'not crop'. Gaps narrower than 2 * seal_m are closed first, so a damaged patch that reaches the edge of its plot
+    through a thin breach still counts as enclosed. Wider gaps (paths, bunds, field margins) stay excluded, and a damaged
+    patch that opens wide onto a path cannot be told apart from bare ground.
     """
     ndvi = idx["ndvi"]
     if ndvi_min is None:
@@ -49,6 +52,8 @@ def crop_mask(
     m = ndimage.binary_opening(m, iterations=2)
     m = ndimage.binary_closing(m, iterations=2)
     if gsd_m:
+        r = max(int(round(seal_m / gsd_m)), 1)
+        m = ndimage.binary_closing(m, structure=ndimage.iterate_structure(ndimage.generate_binary_structure(2, 1), r)) & field_mask
         holes = ndimage.binary_fill_holes(m) & ~m
         lab, n = ndimage.label(holes)
         if n:

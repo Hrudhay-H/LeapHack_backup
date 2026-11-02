@@ -5,7 +5,7 @@
 </div>
 <table style="font-family:'Public Sans', Arial, sans-serif;font-size:32px;color:#12231F">
 <tr><th style="width:30%;text-align:left">Evidence</th><th style="width:20%;text-align:left">What we have</th><th style="width:50%;text-align:left">What it supports</th></tr>
-<tr><td><b>Simulated stress on real imagery</b></td><td>7 planted patches, 2 farms</td><td>The pipeline finds strong stress where we put it. Not pest detection.</td></tr>
+<tr><td><b>Simulated damage on real imagery</b></td><td>6 simulated patches, 2 farms</td><td>The pipeline finds the larger damage where we put it and misses the small. Not pest detection.</td></tr>
 <tr><td><b>Real imagery, proxy labels</b></td><td>Maize, rice, cashew</td><td>The vegetation index tracks stress-like signal. The visual check is weak.</td></tr>
 <tr><td><b>Scout-verified field samples</b></td><td>None yet</td><td>The only basis for an accuracy claim. The verdict loop collects exactly this.</td></tr>
 </table>
@@ -13,7 +13,7 @@
 <p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4B5A54">11 / 14</p>
 <aside>This is the slide that keeps us honest. Each row is a different kind of claim.
 
-Row 1 shows the software works: it localises something we deliberately hid. It cannot show it finds pests.
+Row 1 shows the software works: it localises damage we deliberately drew in. It cannot show it finds pests.
 Row 2 is real imagery with labels that are proxies: index-derived masks, subplot severity, or close-range photos. Useful for seeing which signal is dependable; not an accuracy figure for pests.
 Row 3 is what a real claim needs: scouts walking to hotspots and recording what they find. We have none yet. We built the loop that collects it, and we say so rather than quoting a number.
 

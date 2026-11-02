@@ -107,7 +107,7 @@ def _synthetic_check(survey_dir: Path, s: Survey, hotspot_mask: np.ndarray) -> d
         cov = float((hotspot_mask & comp).sum() / comp.sum())
         per_patch.append({"area_sqm": round(float(comp.sum() * s.gsd_m**2), 2), "coverage": round(cov, 2), "detected": cov >= 0.3})
     return {
-        "note": "Evaluated against deliberately planted synthetic patches. This tests pipeline localisation, not real-world pest-detection accuracy.",
+        "note": "Evaluated against deliberately simulated stress patches. This tests pipeline localisation, not real-world pest-detection accuracy.",
         "pixel_iou": round(float(inter / max(union, 1)), 3),
         "pixel_recall": round(float(inter / max(truth.sum(), 1)), 3),
         "pixel_precision": round(float(inter / max(hotspot_mask.sum(), 1)), 3),

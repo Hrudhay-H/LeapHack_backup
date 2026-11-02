@@ -53,9 +53,10 @@ function FarmCard({ farm, stages, adminKey, thumb, onError }: { farm: SimFarm; s
 
       <div className="rounded-lg bg-gray-50 p-2 text-xs text-gray-600">
         <div className="mb-1 flex items-center gap-2">
-          <b className="text-gray-800">Simulated input</b>
+          <b className="text-gray-800">New survey</b>
           <Chip color={stress ? '#b45309' : '#15803d'}>{stress ? `${farm.input.planted_patches.length} stress patches added` : 'Real imagery, untouched'}</Chip>
         </div>
+        <div className="mb-1 font-medium text-gray-800">{farm.input.context}</div>
         {farm.input.source}.
         {stress && (
           <ul className="mt-1 list-disc pl-4">
@@ -90,9 +91,10 @@ function FarmCard({ farm, stages, adminKey, thumb, onError }: { farm: SimFarm; s
           {thumb && <img src={thumb} alt={`Hotspot overlay for ${farm.farm_name}`} className="w-full rounded-lg border border-gray-200" />}
           {stress && r.patches_total != null && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
-              <b>Self-check against the added patches:</b> {r.patches_found} of {r.patches_total} patches found · every flagged pixel inside a planted
-              patch {r.pixel_precision != null ? `(precision ${r.pixel_precision})` : ''} · share of planted area covered {r.pixel_recall ?? '–'}. Mild
-              or small patches can be missed; this tests the pipeline, not real pest detection.
+              <b>Self-check against the simulated patches:</b> {r.patches_found} of {r.patches_total} had at least 30% of their area flagged ·{' '}
+              {r.pixel_recall != null ? `${Math.round(r.pixel_recall * 100)}%` : '–'} of all simulated damage was flagged ·{' '}
+              {r.pixel_precision != null ? `${Math.round(r.pixel_precision * 100)}%` : '–'} of the flagged area lies inside a simulated patch. Mild or small
+              patches can be missed; this tests the pipeline, not real pest detection.
             </div>
           )}
           <div className="flex flex-wrap gap-2">
@@ -200,11 +202,12 @@ export default function Simulate() {
       <Header title="AgriScout AI" sub="Survey-day simulator" right={<Link to="/admin" className="text-sm text-gray-600 underline">Back to admin</Link>} />
       <main className="mx-auto max-w-6xl space-y-4 px-4 py-5">
         <Card className="space-y-2 text-sm text-gray-700">
-          <h1 className="text-lg font-semibold text-gray-900">Simulate a survey day for three farms</h1>
+          <h1 className="text-lg font-semibold text-gray-900">Simulate the next survey day for three farms</h1>
           <p>
-            Each farm receives a new drone survey. The imagery is <b>real</b> (a rice research station from a public UAV dataset, CC BY 4.0). Farm 1 is
-            left untouched. Farms 2 and 3 have <b>simulated stress patches blended into the real imagery</b>, at known locations, so we can check what the
-            pipeline finds and misses. The patches are <b>not real pest or disease damage</b>, and the reports say so.
+            Each farm receives a new drone survey. The imagery is <b>real</b> (a rice research station from a public UAV dataset, CC BY 4.0). Two farms
+            already have a survey on record: Kikkeri&rsquo;s earlier problem has grown and spread, and Maddur, clean last time, has developed new damage. The
+            third farm is new and clean. The damage is <b>simulated stress blended into the real imagery</b>, at known locations, so we can check what the
+            pipeline finds and misses. It is <b>not real pest or disease damage</b>, and the reports say so.
           </p>
           <p className="text-gray-500">
             Then the real pipeline runs: quality checks, vegetation-index analysis, the experimental visual check, hotspot extraction, a PDF report, and an

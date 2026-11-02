@@ -2,6 +2,7 @@
 they do NOT measure real-world pest-detection accuracy."""
 import numpy as np
 import pytest
+from scipy import ndimage
 
 from agriscout_ml import pipeline
 from agriscout_ml.io import load_survey
@@ -94,24 +95,64 @@ def test_rgb_only_mode_flags_compact_patches_and_is_quiet_when_healthy(world, tm
 
 
 def test_stress_injection_changes_bands_only_inside_the_patch_and_in_the_stress_direction():
-    from agriscout_ml.simulate import Stress, inject_stress
+    from agriscout_ml.simulate import Patch, inject_stress
 
     rng = np.random.default_rng(0)
     gsd = 0.05
-    bands = np.stack([np.full((200, 200), v, np.float32) for v in (0.30, 0.38, 0.22, 0.49, 0.51)])  # B,G,R,RE,NIR
+    bands = np.stack([np.full((260, 260), v, np.float32) for v in (0.30, 0.38, 0.22, 0.49, 0.51)])  # B,G,R,RE,NIR
     bands += rng.normal(0, 0.002, bands.shape).astype(np.float32)
-    crop = np.ones((200, 200), bool)
-    out, truth = inject_stress(bands, crop, gsd, [Stress(1.0, 0.8, name="t")], seed=1)
-    inside, outside = truth, ~ndilate(truth)
+    plots = np.ones((260, 260), bool)
+    out, truth = inject_stress(bands, plots, gsd, [Patch("t", 1.2, 0.8)], "now", seed=1)
     assert truth.sum() > 100
-    assert np.allclose(out[:, outside], bands[:, outside])  # untouched away from the patch
+    far = ndimage.distance_transform_edt(~truth) * gsd > 2.0  # stress fades smoothly; anything 2 m away is untouched
+    assert far.sum() > 1000
+    assert np.allclose(out[:, far], bands[:, far])  # untouched away from the patch
     ndvi = lambda b: (b[4] - b[2]) / (b[4] + b[2])
     ndre = lambda b: (b[4] - b[3]) / (b[4] + b[3])
-    assert ndvi(out)[inside].mean() < ndvi(bands)[inside].mean() - 0.1
-    assert ndre(out)[inside].mean() < ndre(bands)[inside].mean() - 0.1  # NDRE must move too, not only NDVI
+    assert ndvi(out)[truth].mean() < ndvi(bands)[truth].mean() - 0.1
+    assert ndre(out)[truth].mean() < ndre(bands)[truth].mean() - 0.1  # NDRE must move too, not only NDVI
 
 
-def ndilate(m):
-    from scipy import ndimage
+def test_stress_patch_has_an_irregular_outline_and_grows_between_surveys():
+    from agriscout_ml.simulate import Patch, inject_stress
 
-    return ndimage.binary_dilation(m, iterations=6)
+    bands = np.stack([np.full((300, 300), v, np.float32) for v in (0.30, 0.38, 0.22, 0.49, 0.51)])
+    plots = np.ones((300, 300), bool)
+    p = [Patch("t", 2.0, 0.8, earlier=(0.5, 0.7))]
+    _, early = inject_stress(bands, plots, 0.05, p, "earlier", seed=3)
+    _, late = inject_stress(bands, plots, 0.05, p, "now", seed=3)
+    assert 0 < early.sum() < late.sum()
+    assert (early & ~late).sum() < 0.1 * early.sum()  # the earlier patch sits inside the later one: same place, grown
+    cvs = []
+    for seed in range(1, 7):  # outline irregularity: spread of boundary distance from the centre (a perfect circle is 0.007)
+        _, m = inject_stress(bands, plots, 0.05, [Patch("t", 2.0, 0.8)], "now", seed=seed)
+        lab, _n = ndimage.label(m)
+        m = lab == (np.argmax(np.bincount(lab.ravel())[1:]) + 1)
+        cy, cx = ndimage.center_of_mass(m)
+        ys, xs = np.nonzero(m & ~ndimage.binary_erosion(m))
+        r = np.hypot(ys - cy, xs - cx)
+        cvs.append(r.std() / r.mean())
+    assert min(cvs) > 0.012 and np.median(cvs) > 0.02
+    _, none = inject_stress(bands, plots, 0.05, [Patch("later", 1.0, 0.7)], "earlier", seed=3)
+    assert none.sum() == 0  # a patch with no earlier state is absent at the earlier survey
+
+
+def test_crop_mask_keeps_damage_that_reaches_a_plot_edge_but_not_a_wide_path():
+    from agriscout_ml.spectral import crop_mask, indices
+
+    gsd = 0.05
+    n = 400
+    ndvi_good = np.zeros((4, n, n), np.float32)
+    red, green, re_, nir = 0.10, 0.12, 0.30, 0.55
+    ms = np.stack([np.full((n, n), v, np.float32) for v in (red, green, re_, nir)])
+    path = np.zeros((n, n), bool)
+    path[:, 190:230] = True  # a 2 m wide path down the middle
+    ms[0][path], ms[3][path] = 0.30, 0.30  # bare ground: low NDVI
+    damage = np.zeros((n, n), bool)
+    damage[100:160, 60:120] = True  # 3 m patch inside the left plot ...
+    damage[130:136, 120:190] = True  # ... reaching the plot edge through a 0.3 m wide breach
+    ms[0][damage], ms[3][damage] = 0.35, 0.28  # severely damaged: NDVI far below the crop floor
+    idx = indices(ms)
+    crop = crop_mask(idx, np.ones((n, n), bool), gsd_m=gsd)
+    assert crop[damage & (np.arange(n)[None, :] < 130)].mean() > 0.9  # the damaged patch stays in the crop mask
+    assert crop[path].mean() < 0.05  # the wide path does not

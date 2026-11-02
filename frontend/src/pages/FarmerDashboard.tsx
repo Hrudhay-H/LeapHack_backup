@@ -255,12 +255,12 @@ export default function FarmerDashboard() {
 
             {survey.synthetic_check && (
               <Card className="text-sm">
-                <div className="font-semibold">Pipeline self-check (planted patches only)</div>
+                <div className="font-semibold">Pipeline self-check (simulated patches only)</div>
                 <p className="mt-1 text-gray-600">{survey.synthetic_check.note}</p>
                 <div className="mt-2 text-gray-700">
-                  Planted patches found: <b>{survey.synthetic_check.patches.filter((p) => p.detected).length}</b> of{' '}
-                  {survey.synthetic_check.patches.length} · pixel recall {survey.synthetic_check.pixel_recall} · precision{' '}
-                  {survey.synthetic_check.pixel_precision}
+                  <b>{survey.synthetic_check.patches.filter((p) => p.detected).length}</b> of {survey.synthetic_check.patches.length} simulated
+                  patches had at least 30% of their area flagged · {Math.round(survey.synthetic_check.pixel_recall * 100)}% of all simulated damage was
+                  flagged · {Math.round(survey.synthetic_check.pixel_precision * 100)}% of the flagged area lies inside a simulated patch
                 </div>
               </Card>
             )}

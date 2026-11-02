@@ -32,7 +32,7 @@ RUN apt-get update \
 COPY . .
 # Generate the demo (synthetic fields, simulator reference, seeded database and reports). Also downloads the ResNet-18
 # weights once so the running container needs no outbound access.
-RUN python scripts/bootstrap_demo.py --sim
+RUN python scripts/bootstrap_demo.py
 
 EXPOSE 8000
 ENTRYPOINT ["sh", "scripts/docker-entrypoint.sh"]

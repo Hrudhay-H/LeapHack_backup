@@ -46,10 +46,10 @@ def make_report(session: Session, survey: Survey) -> Report:
     out = REPORTS / f"{report_id}.pdf"
 
     map_img = reports.build_map(run_dir, survey.summary, hs_dicts)
-    html = reports.build_html(survey, farmer, farm, hs_dicts, map_img, now().strftime("%d %b %Y, %H:%M UTC"))
+    html = reports.build_html(survey, farmer, farm, hs_dicts, map_img, survey.created_at.strftime("%d %b %Y, %H:%M UTC"))
     reports.render_pdf(html, out)
 
-    rep = Report(id=report_id, survey_id=survey.id, farmer_id=farmer.id, version=version, path=str(out))
+    rep = Report(id=report_id, survey_id=survey.id, farmer_id=farmer.id, version=version, path=str(out), generated_at=survey.created_at)
     session.add(rep)
     session.commit()
     return rep

@@ -93,6 +93,7 @@ export interface SimFarm {
   access_mode: 'DIGITAL' | 'ASSISTED' | 'BOTH' | null
   input: {
     source: string
+    context: string
     simulated_stress: boolean
     planted_patches: { name: string | null; radius_m: number | null; severity: number | null }[]
   }

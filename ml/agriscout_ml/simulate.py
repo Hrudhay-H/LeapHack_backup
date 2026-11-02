@@ -1,14 +1,18 @@
-"""Three-farm survey-day simulation built on REAL imagery with optional SIMULATED stress patches.
+"""Survey simulation on REAL imagery: a real rice research-station mosaic with SIMULATED stress patches blended in.
 
-Real imagery: the healthy research-station site of the Thai UAV rice dataset (CC BY 4.0), stitched by
-`mosaic_blb`. The site is split into four blocks:
-  ref  - top-left block, used only to fit PatchCore's normal reference (never scored)
-  a    - top-right block, left untouched            -> a real field with no injected stress
-  b, c - bottom blocks, with simulated stress patches blended into the real bands
+Real imagery: the healthy site of the Thai UAV rice dataset (CC BY 4.0), stitched by `mosaic_blb`. It is cut into four
+blocks:
+  ref  - used only to fit the visual check's normal reference (never scored)
+  a, b, c - one block per demo farm
 
-The injected patches are NOT real pest or disease damage. They shift the bands the way vegetation stress does
-(red and red-edge up, NIR down, slight yellowing) with a soft edge, at known locations, so the pipeline's hits and
-misses can be checked. Every survey carries this in survey.json and the UI/PDF repeat it.
+The stress is NOT real pest or disease damage. It is drawn to look like field damage so the demo is believable, and it is
+recorded in every survey's metadata and repeated in the UI and PDF:
+  * irregular, noise-warped outlines rather than ellipses
+  * severity that varies inside a patch and fades toward the edge
+  * thinning: speckled gaps where real bare ground from the same image shows through
+  * optional satellite foci around a main patch (how a spreading infestation often looks)
+  * stress is confined to the crop plots and fades at plot edges
+Patches have two states so a farm can have history: `earlier` (small or mild) and `now` (grown, with satellites).
 
   python -m agriscout_ml.simulate OUT_ROOT [--train MODEL.pt]
 """
@@ -35,73 +39,158 @@ BLOCKS = {
 
 
 @dataclass
-class Stress:
-    radius_m: float  # semi-axis along the patch's long direction
-    severity: float  # 0..1, share of the full stress shift applied
+class Patch:
+    name: str
+    radius_m: float  # long semi-axis at the later survey
+    severity: float  # 0..1 peak severity at the later survey
     aspect: float = 1.0  # long axis / short axis
     angle_deg: float = 0.0
-    name: str = ""
+    earlier: tuple[float, float] | None = None  # (size fraction, severity fraction) at the earlier survey; None = not there yet
+    satellites: int = 0  # small foci around the patch at the later survey only
 
 
-SCENARIOS: dict[str, list[Stress]] = {
+# What each farm looks like, by block. An empty list is a real, untouched field.
+SCENARIOS: dict[str, list[Patch]] = {
     "a": [],
     "b": [
-        Stress(2.0, 0.90, name="large severe patch"),
-        Stress(1.3, 0.60, name="medium patch"),
-        Stress(0.8, 0.45, name="small mild patch"),
+        Patch("main patch", 3.2, 0.82, aspect=1.2, angle_deg=20, earlier=(0.78, 0.92), satellites=3),
+        Patch("new patch", 1.2, 0.65),
     ],
     "c": [
-        Stress(2.2, 0.70, aspect=3.2, angle_deg=30, name="elongated strip"),
-        Stress(1.6, 0.55, name="medium patch"),
-        Stress(1.0, 0.80, name="small severe patch"),
-        Stress(0.6, 0.50, name="tiny patch"),
+        Patch("edge strip", 2.4, 0.70, aspect=3.0, angle_deg=25),
+        Patch("mid-field patch", 1.5, 0.60, aspect=1.1, angle_deg=70),
     ],
 }
 
 
-def _place(crop: np.ndarray, gsd: float, specs: list[Stress], seed: int):
-    """Pick patch centres inside the crop (plots), away from paths and from each other."""
+def _grid_noise(seed: int, n: int, sigma: float) -> np.ndarray:
+    g = ndimage.gaussian_filter(np.random.default_rng(seed).normal(size=(n, n)), sigma, mode="wrap")
+    return g / (np.abs(g).max() + 1e-9)
+
+
+def _sample(grid: np.ndarray, u: np.ndarray, v: np.ndarray, extent: float = 3.0) -> np.ndarray:
+    """Sample a fixed noise grid in patch-normalised coordinates, so a patch keeps its character as it grows."""
+    n = grid.shape[0]
+    cu = (u + extent) / (2 * extent) * (n - 1)
+    cv = (v + extent) / (2 * extent) * (n - 1)
+    return ndimage.map_coordinates(grid, [cv, cu], order=3, mode="nearest")
+
+
+def _smooth(x: np.ndarray) -> np.ndarray:
+    x = np.clip(x, 0.0, 1.0)
+    return x * x * (3 - 2 * x)
+
+
+def _severity(shape, cx, cy, gsd, radius_m, aspect, angle_deg, peak, seed) -> np.ndarray:
+    """One irregular, patchy stress patch as a 0..1 severity map."""
+    yy, xx = np.mgrid[0 : shape[0], 0 : shape[1]].astype(np.float32)
+    a = max(radius_m / gsd, 1.0)
+    b = a / aspect
+    t = np.deg2rad(angle_deg)
+    u = ((xx - cx) * np.cos(t) + (yy - cy) * np.sin(t)) / a
+    v = (-(xx - cx) * np.sin(t) + (yy - cy) * np.cos(t)) / b
+    r = np.sqrt(u**2 + v**2)
+    outline = _sample(_grid_noise(seed, 14, 1.6), u, v)  # warps the boundary
+    detail = _sample(_grid_noise(seed + 1, 30, 1.8), u, v)  # variation inside
+    rw = r * (1.0 + 0.38 * outline)
+    core = _smooth((1.05 - rw) / 0.55)
+    return peak * core * (0.80 + 0.20 * detail)
+
+
+def _patch_state(shape, c, gsd, p: Patch, state: str, seed: int) -> np.ndarray:
+    if state == "earlier":
+        if p.earlier is None:
+            return np.zeros(shape, np.float32)
+        size, sev = p.earlier
+    else:
+        size, sev = 1.0, 1.0
+    out = _severity(shape, c[1], c[0], gsd, p.radius_m * size, p.aspect, p.angle_deg, p.severity * sev, seed)
+    if state == "now" and p.satellites:
+        rng = np.random.default_rng(seed + 7)
+        t = np.deg2rad(p.angle_deg)
+        for k in range(p.satellites):
+            ang = rng.uniform(0, 2 * np.pi)
+            dist = p.radius_m * rng.uniform(1.55, 1.95)
+            dx, dy = np.cos(ang) * dist / gsd, np.sin(ang) * dist / gsd
+            out = np.maximum(
+                out,
+                _severity(shape, c[1] + dx, c[0] + dy, gsd, p.radius_m * rng.uniform(0.22, 0.34), 1.0, 0, 0.6 * p.severity, seed + 11 + k),
+            )
+    return out.astype(np.float32)
+
+
+def _place(plots: np.ndarray, gsd: float, patches: list[Patch], seed: int):
+    """Choose patch centres well inside the crop plots and apart from each other."""
     rng = np.random.default_rng(seed)
-    dist = ndimage.distance_transform_edt(crop) * gsd
+    dist = ndimage.distance_transform_edt(plots) * gsd
     out, taken = [], []
-    for sp in specs:
-        need = max(sp.radius_m / sp.aspect, 0.4) + 0.3  # keep the patch's short half-width inside the plot
+    for p in patches:
+        need = max(p.radius_m / p.aspect, 0.5) * 0.9
         cand = np.argwhere(dist > need)
         rng.shuffle(cand)
         for y, x in cand:
-            if all(np.hypot(y - ty, x - tx) * gsd > sp.radius_m + tr + 1.0 for ty, tx, tr in taken):
+            if all(np.hypot(y - ty, x - tx) * gsd > (p.radius_m + tr) * 1.5 + 1.0 for ty, tx, tr in taken):
                 out.append((int(y), int(x)))
-                taken.append((y, x, sp.radius_m))
+                taken.append((y, x, p.radius_m))
                 break
         else:
-            raise RuntimeError(f"no room for patch {sp.name!r}")
+            raise RuntimeError(f"no room for patch {p.name!r}")
     return out
 
 
-def inject_stress(bands: np.ndarray, crop: np.ndarray, gsd: float, specs: list[Stress], seed: int = 0):
-    """bands: (5,H,W) float [B,G,R,RE,NIR]. Returns (modified copy, truth mask of the affected area)."""
+def inject_stress(bands: np.ndarray, plots: np.ndarray, gsd: float, patches: list[Patch], state: str = "now", seed: int = 0):
+    """bands: (5,H,W) float [B,G,R,RE,NIR]. Returns (modified copy, truth mask of visibly stressed pixels)."""
+    shape = plots.shape
+    centres = _place(plots, gsd, patches, seed)
+    sev = np.zeros(shape, np.float32)
+    for i, (p, c) in enumerate(zip(patches, centres)):
+        sev = np.maximum(sev, _patch_state(shape, c, gsd, p, state, seed * 100 + 13 * i + 5))
+    sev *= ndimage.gaussian_filter(plots.astype(np.float32), 1.8)  # fades at plot edges, never spills onto paths
     out = bands.copy()
-    truth = np.zeros(crop.shape, bool)
-    yy, xx = np.mgrid[0 : crop.shape[0], 0 : crop.shape[1]].astype(np.float32)
-    for sp, (cy, cx) in zip(specs, _place(crop, gsd, specs, seed)):
-        a = sp.radius_m / gsd
-        b = a / sp.aspect
-        t = np.deg2rad(sp.angle_deg)
-        u = (xx - cx) * np.cos(t) + (yy - cy) * np.sin(t)
-        v = -(xx - cx) * np.sin(t) + (yy - cy) * np.cos(t)
-        r = np.sqrt((u / a) ** 2 + (v / b) ** 2)
-        soft = np.clip((1.15 - r) / 0.3, 0, 1) * crop  # soft edge, never outside the crop
-        s = soft * sp.severity
-        out[0] *= 1 - 0.05 * s  # blue
-        out[1] *= 1 - 0.10 * s  # green
-        out[2] *= 1 + 0.45 * s  # red
-        out[3] *= 1 + 0.12 * s  # red edge rises with chlorophyll loss (a drop would leave NDRE unchanged)
-        out[4] *= 1 - 0.30 * s  # NIR falls with canopy thinning
-        truth |= soft > 0.5
-    return out, truth
+    if sev.max() <= 0:
+        return out, np.zeros(shape, bool)
+    # Thinning: speckled gaps showing real bare ground from the same image (paths between plots).
+    path = bands[:, ~plots & (bands.sum(axis=0) > 0)]
+    soil = np.median(path, axis=1) if path.shape[1] > 200 else bands.mean(axis=(1, 2))
+    h = ndimage.gaussian_filter(np.random.default_rng(seed + 99).normal(size=shape), 1.1)
+    h /= h.std() + 1e-9
+    gap = np.clip((sev - 0.30) / 0.45, 0, 1) * _smooth((h - 0.1) / 1.0) * 0.55
+    out = out * (1 - gap) + soil[:, None, None] * gap
+    # A visibly damaged canopy: chlorophyll loss lifts red and red-edge reflectance, thinning drops NIR, and the leaf
+    # yellows/browns (blue and green fall less than red rises). Strength is chosen so the damage is plainly visible in RGB.
+    out[0] *= 1 - 0.10 * sev  # blue
+    out[1] *= 1 - 0.04 * sev  # green
+    out[2] *= 1 + 1.00 * sev  # red
+    out[3] *= 1 + 0.22 * sev  # red edge rises with chlorophyll loss (a drop would leave NDRE unchanged)
+    out[4] *= 1 - 0.38 * sev  # NIR falls with canopy thinning
+    return out, sev > 0.20
+
+
+def _write(d: Path, ds, lab, okk, tr, crs, gsd, name: str, planted: list[dict], truth: np.ndarray | None, stressed: bool):
+    meta = mosaic_blb.write_survey(np.where(okk, ds, 0), lab, okk, tr, crs, gsd, d, None, name, "healthy_site")
+    sj = json.loads((d / "survey.json").read_text())
+    sj["data_source"] = "real_imagery_simulated_stress" if stressed else "blb_thai_uav"
+    sj["simulated_stress"] = (
+        "Simulated stress patches were blended into this real imagery (band shifts, thinning and irregular outlines "
+        "mimicking crop damage). They are not real pest or disease damage."
+        if stressed
+        else None
+    )
+    sj["planted"] = planted
+    sj["reflectance_calibrated"] = False
+    (d / "survey.json").write_text(json.dumps(sj, indent=2))
+    if truth is not None and truth.any():
+        with rasterio.open(d / "rgb.tif") as r:
+            gh, gw, t2 = r.height, r.width, r.transform
+        ys, xs = np.nonzero(okk)
+        crop = truth[ys.min() : ys.min() + gh, xs.min() : xs.min() + gw]
+        with rasterio.open(d / "truth_mask.tif", "w", driver="GTiff", height=gh, width=gw, count=1, dtype="uint8", crs=crs, transform=t2, compress="deflate") as dst:
+            dst.write(crop.astype(np.uint8)[None])
+    return {k: meta[k] for k in ("size_px", "area_m2")}
 
 
 def build(out_root: Path, factor: int = 4) -> dict:
+    """Write sim_ref, and for each farm block the latest survey `sim_<k>` plus, where a farm has history, `sim_<k>_prev`."""
     ds, lab, ok, transform, crs, gsd = mosaic_blb.build_site(1, factor)
     H, W = ok.shape
     ndvi = (ds[4] - ds[2]) / (ds[4] + ds[2] + 1e-6)
@@ -110,40 +199,18 @@ def build(out_root: Path, factor: int = 4) -> dict:
     for key, (fx0, fy0, fx1, fy1) in BLOCKS.items():
         x0, x1, y0, y1 = int(fx0 * W), int(fx1 * W), int(fy0 * H), int(fy1 * H)
         sl = (slice(y0, y1), slice(x0, x1))
-        bands = ds[(slice(None), *sl)]
-        okk = ok[sl]
-        truth = np.zeros(okk.shape, bool)
-        specs = SCENARIOS.get(key, [])
-        if specs:
-            bands, truth = inject_stress(bands, plots[sl], gsd, specs, seed=ord(key))
+        bands, okk, plk, labk = ds[(slice(None), *sl)], ok[sl], plots[sl], lab[sl]
         tr = transform * rasterio.Affine.translation(x0, y0)
-        d = out_root / f"sim_{key}"
-        meta = mosaic_blb.write_survey(
-            np.where(okk, bands, 0), lab[sl], okk, tr, crs, gsd, d, None, f"healthy_site_block_{key}", "healthy_site"
-        )
-        sj = json.loads((d / "survey.json").read_text())
-        sj["data_source"] = "real_imagery_simulated_stress" if specs else "blb_thai_uav"
-        sj["simulated_stress"] = (
-            "Simulated stress patches were blended into this real imagery (band shifts mimicking vegetation stress). "
-            "They are not real pest or disease damage."
-            if specs
-            else None
-        )
-        sj["planted"] = [asdict(s) for s in specs]
-        sj["reflectance_calibrated"] = False
-        (d / "survey.json").write_text(json.dumps(sj, indent=2))
-        # truth mask for the pipeline's self-check, on the same cropped grid as the written rasters
-        if specs:
-            with rasterio.open(d / "rgb.tif") as r:
-                gh, gw = r.height, r.width
-                t2 = r.transform
-            ys, xs = np.nonzero(okk)
-            ty0, tx0 = ys.min(), xs.min()
-            tcrop = truth[ty0 : ty0 + gh, tx0 : tx0 + gw]
-            with rasterio.open(d / "truth_mask.tif", "w", driver="GTiff", height=gh, width=gw, count=1, dtype="uint8",
-                               crs=crs, transform=t2, compress="deflate") as dst:
-                dst.write(tcrop.astype(np.uint8)[None])
-        info[key] = {k: meta[k] for k in ("size_px", "area_m2")} | {"patches": len(specs)}
+        patches = SCENARIOS.get(key, [])
+        seed = sum(ord(ch) * (31 ** i) for i, ch in enumerate(key)) % 100000
+        now_b, now_t = inject_stress(bands, plk, gsd, patches, "now", seed) if patches else (bands, None)
+        name = f"healthy_site_block_{key}"
+        planted = [asdict(p) for p in patches]
+        info[key] = _write(out_root / f"sim_{key}", now_b, labk, okk, tr, crs, gsd, name, planted, now_t, bool(patches)) | {"patches": len(patches)}
+        if any(p.earlier for p in patches) or (key == "c"):  # farms with an earlier survey on record
+            earlier = [p for p in patches if p.earlier]
+            prev_b, prev_t = inject_stress(bands, plk, gsd, patches, "earlier", seed) if earlier else (bands, None)
+            _write(out_root / f"sim_{key}_prev", prev_b, labk, okk, tr, crs, gsd, name, [asdict(p) for p in earlier], prev_t, bool(earlier))
     return info
 
 

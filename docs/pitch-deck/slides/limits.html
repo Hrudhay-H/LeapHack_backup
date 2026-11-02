@@ -10,11 +10,11 @@
 </div>
 <div style="display:flex;flex-direction:column;gap:12px;background:#1B332E;border:1px solid #2E4640;border-radius:8px;padding:28px">
 <p style="font-size:32px;font-weight:700;line-height:1.15;color:#E9EDE7">No pest-labelled aerial test.</p>
-<p style="font-size:24px;line-height:1.4;color:#B5C6BF">We found no public top-down pest data. The anomaly farms use simulated stress.</p>
+<p style="font-size:24px;line-height:1.4;color:#B5C6BF">We found no public top-down pest data. The damage on the rice farms is simulated.</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:12px;background:#1B332E;border:1px solid #2E4640;border-radius:8px;padding:28px">
 <p style="font-size:32px;font-weight:700;line-height:1.15;color:#E9EDE7">It misses mild and small stress.</p>
-<p style="font-size:24px;line-height:1.4;color:#B5C6BF">It found 3 of 7 planted patches, all strong. Almost nothing else was flagged.</p>
+<p style="font-size:24px;line-height:1.4;color:#B5C6BF">On simulated damage it found the larger patches (4 of 6) and missed small satellite spots. Almost nothing else was flagged.</p>
 </div>
 <div style="display:flex;flex-direction:column;gap:12px;background:#1B332E;border:1px solid #2E4640;border-radius:8px;padding:28px">
 <p style="font-size:32px;font-weight:700;line-height:1.15;color:#E9EDE7">A uniformly stressed field passes.</p>
@@ -35,9 +35,9 @@
 
 1. We do not name the pest. This is the problem statement’s own limit and our product follows it.
 2. We looked for public top-down pest-labelled data and did not find usable data. The only labelled pest, disease and abiotic set we found (cashew) is close-range and oblique. The two anomaly farms in the demo use simulated stress on real rice imagery.
-3. In that test the pipeline found 3 of 7 planted patches, all with severity of 0.7 or more, and missed the milder and smaller ones. Nearly every flagged pixel was inside a planted patch. High precision, modest recall.
+3. In that test the pipeline found 4 of 6 simulated patches (at least 30 percent of each flagged) and missed small satellite spots; it flagged 34 percent of the simulated damage at Kikkeri and 76 percent at Maddur. About 99 to 100 percent of the flagged area was inside a simulated patch. High precision, modest recall. A badly damaged patch that opens wide onto a path can also be masked out as bare ground; we closed narrow gaps but wide ones remain a limit.
 4. Because each field is scored against itself, a field that is stressed everywhere has no outlier. It would pass. A reference from a healthy neighbour could help, but a reference learned at one rice site did not transfer to another in our tests.
-5. The visual texture model was near chance on real maize and rice. We kept it as a minor, clearly labelled input. Its 30% weight was chosen after we saw results on the planted patches, so do not read the planted-patch result as independent proof. Thresholds are also provisional.
+5. The visual texture model was near chance on real maize and rice. We kept it as a minor, clearly labelled input. Its 30% weight was chosen after we saw results on the planted patches, so do not read the simulated-damage result as independent proof. Thresholds are also provisional.
 6. No drone was flown and no scout has used it yet. SMS is a mock gateway; a one-time code proves control of a phone, not identity; Kannada text needs review; every hotspot shows low confidence because the dataset does not state its radiometric calibration. The farmers in the demo are fictional.
 
 Then say what we do about it: the next slide.</aside>

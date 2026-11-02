@@ -1,5 +1,5 @@
 <section id="pipeline" data-transition="fade" style="background:#12231F;color:#E9EDE7;font-family:'Public Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
-<img src="/_blob/344710aec5de5369bc44b58189342479" alt="Rice plots with two numbered hotspots marked on the field map" style="position:absolute;right:128px;top:128px;width:433px;height:560px;object-fit:cover;border:2px solid #2E4640">
+<img src="/_blob/6180738472828138c232d7c5049f12e2" alt="Real rice plots with two numbered hotspots, an elongated strip near the top and a round patch at the lower left" style="position:absolute;right:128px;top:128px;width:433px;height:560px;object-fit:cover;border:2px solid #2E4640">
 <p style="position:absolute;right:128px;top:708px;width:433px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.4;color:#B5C6BF">Output: numbered hotspots on a real survey.</p>
 <div style="display:flex;flex-direction:column;gap:28px;width:1100px">
 <p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#EE8426;font-weight:500">How it works</p>
@@ -46,7 +46,7 @@
 <p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#B5C6BF">04 / 14</p>
 <aside>This is a real sequence, so the numbers mean something. Walk it left to right with the image: a survey goes in, a ranked set of numbered hotspots comes out.
 
-Step 2 matters more than it looks. The crop mask chooses its vegetation threshold from the survey itself because absolute NDVI differs between sensors (we saw 0.44 on one rice site, 0.3 to 0.7 on maize, 0.8 on our synthetic fields). It also fills small enclosed gaps so a badly stressed patch inside a plot is not dropped as non-crop.
+Step 2 matters more than it looks. The crop mask chooses its vegetation threshold from the survey itself because absolute NDVI differs between sensors (we saw 0.44 on a rice site and 0.3 to 0.7 on maize). It also closes narrow gaps and fills small enclosed ones, so a badly damaged patch inside a plot is not dropped as non-crop. Damage that opens wide onto a path still looks like bare ground and can be missed.
 
 Step 3: the vegetation index is the dependable signal. The texture check is a pretrained model used as a second opinion and is marked experimental everywhere in the product.
 

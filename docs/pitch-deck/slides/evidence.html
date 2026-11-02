@@ -3,7 +3,7 @@
 <h2 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.05;letter-spacing:-1px;color:#12231F">What we tested, and what it showed</h2>
 <table style="font-family:'Public Sans', Arial, sans-serif;font-size:26px;color:#12231F">
 <tr><th style="width:24%;text-align:left">Test</th><th style="width:36%;text-align:left">Data and labels</th><th style="width:40%;text-align:left">Result</th></tr>
-<tr><td>Planted stress on real rice</td><td>Top-down plots; 7 simulated patches added</td><td>3 of 7 found, all strong. Nearly every flagged pixel inside a patch. Mild and small patches missed.</td></tr>
+<tr><td>Simulated damage on real rice</td><td>Top-down plots; simulated patches at two dates</td><td>Kikkeri 2 of 4 patches found, Maddur 2 of 2 (34% and 76% of damage flagged). Tiny satellite spots missed.</td></tr>
 <tr><td>Maize, two real fields</td><td>Top-down; labels derived from the vegetation index</td><td>Index 0.78 to 0.94. Visual check 0.56 to 0.66.</td></tr>
 <tr><td>Blight severity, real rice</td><td>Top-down; expert plot labels, high against low severity</td><td>Index 0.64 to 0.65. Visual check 0.54, near chance.</td></tr>
 <tr><td>Cashew leaf damage</td><td>Close-range and oblique, not aerial; human-drawn boxes</td><td>Visual check 0.65 to 0.73. Colour index 0.61 to 0.72.</td></tr>
@@ -14,7 +14,7 @@
 <p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4B5A54">10 / 14</p>
 <aside>Four tests, from four different data sources, so no single dataset carries the story.
 
-Planted stress on real rice: our own simulator-style test. The two anomaly farms contain 7 patches in total; 3 were found, and the ones found had severity of 0.7 or more. The patches missed were milder, whatever their size. That is seven patches, so treat it as an observation, not a rate.
+Simulated damage on real rice: our own test. At Kikkeri the latest survey has four simulated patches (a large one, a new one and two small satellite spots); the two larger were found, and 34 percent of all simulated damage was flagged. At Maddur both patches were found, and 76 percent of the damage was flagged. Found means at least 30 percent of the patch flagged. That is six patches, so treat it as an observation, not a rate. The earlier Kikkeri survey had one hotspot covering about 15 percent of its patch.
 
 Maize: two real top-down mosaics from a public dataset. The labels were derived from vegetation-index thresholds, which flatters the index and says little about the visual model.
 
