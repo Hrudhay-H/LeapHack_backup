@@ -1,0 +1,43 @@
+<section id="delivery" data-transition="fade" style="background:#12231F;color:#E9EDE7;font-family:'Public Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:28px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#EE8426;font-weight:500">Delivery</p>
+<h2 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.05;letter-spacing:-1px;color:#E9EDE7">A keypad phone gets the report too</h2>
+</div>
+<div style="display:flex;gap:64px;align-items:flex-start">
+<div style="display:flex;flex-direction:column;gap:24px;width:700px">
+<div style="display:flex;gap:24px;align-items:flex-start">
+<p style="width:40px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:32px;font-weight:500;line-height:1.35;color:#EE8426">1</p>
+<p style="width:636px;font-size:32px;line-height:1.35;color:#E9EDE7">An SMS in Kannada says the report is ready and where to collect it.</p>
+</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<p style="width:40px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:32px;font-weight:500;line-height:1.35;color:#EE8426">2</p>
+<p style="width:636px;font-size:32px;line-height:1.35;color:#E9EDE7">The farmer visits the service centre. The operator looks them up by Farmer ID.</p>
+</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<p style="width:40px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:32px;font-weight:500;line-height:1.35;color:#EE8426">3</p>
+<p style="width:636px;font-size:32px;line-height:1.35;color:#E9EDE7">A one-time code goes to the farmer’s own phone, and the farmer enters it.</p>
+</div>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<p style="width:40px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:32px;font-weight:500;line-height:1.35;color:#EE8426">4</p>
+<p style="width:636px;font-size:32px;line-height:1.35;color:#E9EDE7">The operator gets that one report for five minutes. Every action is logged.</p>
+</div>
+</div>
+<div style="display:flex;gap:24px;align-items:flex-start;width:900px">
+<div style="display:flex;flex-direction:column;gap:12px;width:277px">
+<img src="/_blob/643fd778d2422d24b0c287df67fa4322" alt="A keypad phone inbox showing a one-time code message and the Kannada survey notice" style="width:277px;height:520px;object-fit:contain">
+<p style="font-size:24px;line-height:1.4;color:#B5C6BF">SMS inbox (mock gateway)</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;width:599px">
+<img src="/_blob/b209c9a3d655bccb93ed93114aa4213c" alt="Operator portal showing an authorised report with a Kannada script to read to the farmer" style="width:599px;height:289px;object-fit:contain">
+<p style="font-size:24px;line-height:1.4;color:#B5C6BF">Operator view: this report only, with a Kannada script to read out.</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1000px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#B5C6BF">AgriScout AI · Problem 4</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#B5C6BF">08 / 14</p>
+<aside>Three audiences, one report. A farmer with a smartphone signs in and sees the dashboard and PDF. A farmer with a keypad phone gets an SMS and collects the report through a village operator. The same PDF is served to both, so nothing is generated twice.
+
+The assisted flow, in order: the operator finds the farmer by ID and sees only a masked phone number; the system sends a six-digit code to the farmer’s registered phone; the farmer enters it. The code is hashed, single-use, expires in five minutes and locks after three wrong tries. The operator then receives a token for that one report, valid five minutes, and every view and download is written to an audit log.
+
+Say the caveat: a one-time code proves control of the registered phone, not identity. A real deployment needs a documented FPO-verified fallback. The SMS gateway here is a mock; real Indian SMS needs a DLT-registered sender and approved templates, and Kannada must be sent as Unicode.</aside>
+</section>

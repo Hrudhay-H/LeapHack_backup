@@ -1,0 +1,31 @@
+<section id="scout-loop" data-transition="fade" style="background:#E9EDE7;color:#12231F;font-family:'Public Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:28px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A0E;font-weight:500">The scout loop</p>
+<h2 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.05;letter-spacing:-1px;color:#12231F">Scouts close the loop</h2>
+</div>
+<div style="display:flex;gap:64px;align-items:flex-start">
+<div style="display:flex;flex-direction:column;gap:12px;width:1040px">
+<img src="/_blob/8e3339353ce06b15467d2aa783d35975" alt="Farmer dashboard in Kannada with a field map, one highlighted hotspot, and three ground-check buttons" style="width:1040px;height:371px;object-fit:contain;background:#F6F8F4;border:1px solid #C7D0C8">
+<p style="font-size:24px;line-height:1.4;color:#4B5A54">Farmer dashboard in Kannada: the hotspot, its confidence, and three ground-check buttons.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:32px;width:560px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:#A44A0E">Recorded</p>
+<p style="font-size:32px;line-height:1.35;color:#12231F">Pest damage seen, no pest damage, or other. Per hotspot.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:#A44A0E">Kept with</p>
+<p style="font-size:32px;line-height:1.35;color:#12231F">Who recorded it, when, and which model version made the hotspot.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:#A44A0E">Becomes</p>
+<p style="font-size:32px;line-height:1.35;color:#12231F">The field-verified labels we could not find publicly.</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1000px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4B5A54">AgriScout AI · Problem 4</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4B5A54">09 / 14</p>
+<aside>This is how we answer challenge 3, the labelled-data problem, and it is also the honest route to any accuracy claim. A scout walks to a ranked hotspot and taps one of three answers: pest damage seen, no pest damage, or other / not sure. The verdict is stored against that hotspot, the survey, who recorded it, and the model version.
+
+We do not retrain on verdicts automatically. Collect them first, review label quality, then use them to calibrate thresholds and to train and validate anything learned. Until that data exists we make no accuracy claim, which is the point of the evidence ladder two slides on.</aside>
+</section>

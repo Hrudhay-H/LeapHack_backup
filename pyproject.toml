@@ -1,0 +1,35 @@
+[project]
+name = "agriscout"
+version = "0.1.0"
+description = "AgriScout AI: UAV-based crop anomaly hotspot detection"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "numpy",
+    "scipy",
+    "scikit-image",
+    "rasterio",
+    "shapely",
+    "pyproj",
+    "pillow",
+    "matplotlib",
+    "torch",
+    "torchvision",
+    "fastapi",
+    "uvicorn[standard]",
+    "sqlmodel",
+    "python-multipart",
+    "playwright",
+    "pytest",
+    "httpx",
+]
+
+[tool.setuptools]
+packages = ["agriscout_ml", "app"]
+
+[tool.setuptools.package-dir]
+agriscout_ml = "ml/agriscout_ml"
+app = "backend/app"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"

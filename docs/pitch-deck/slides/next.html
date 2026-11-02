@@ -1,0 +1,35 @@
+<section id="next" data-transition="fade" style="background:#E9EDE7;color:#12231F;font-family:'Public Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:28px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A0E;font-weight:500">Next</p>
+<h2 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.05;letter-spacing:-1px;color:#12231F">From simulated to field-verified</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+<div style="display:flex;flex-direction:column;gap:12px;background:#F6F8F4;border:1px solid #C7D0C8;border-radius:8px;padding:36px">
+<h3 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:44px;font-weight:600;line-height:1.1;color:#12231F">Walk the hotspots</h3>
+<p style="font-size:32px;line-height:1.35;color:#12231F">Scouts record verdicts on real farms. These become the first field-verified labels.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#F6F8F4;border:1px solid #C7D0C8;border-radius:8px;padding:36px">
+<h3 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:44px;font-weight:600;line-height:1.1;color:#12231F">Fly it properly</h3>
+<p style="font-size:32px;line-height:1.35;color:#12231F">One field at three altitudes, with a calibration panel. Measure the smallest patch we can catch.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#F6F8F4;border:1px solid #C7D0C8;border-radius:8px;padding:36px">
+<h3 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:44px;font-weight:600;line-height:1.1;color:#12231F">Add a second date</h3>
+<p style="font-size:32px;line-height:1.35;color:#12231F">Flag patches as new, growing or stable. Spread over time says more than one image.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#F6F8F4;border:1px solid #C7D0C8;border-radius:8px;padding:36px">
+<h3 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:44px;font-weight:600;line-height:1.1;color:#12231F">Tune with real data</h3>
+<p style="font-size:32px;line-height:1.35;color:#12231F">Plot detection against false alarms on verified fields, then set thresholds and fusion weights.</p>
+</div>
+</div>
+<p style="font-size:32px;line-height:1.35;color:#4B5A54">Also on the list: Kannada review with an agricultural expert, and real SMS delivery.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1000px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4B5A54">AgriScout AI · Problem 4</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4B5A54">13 / 14</p>
+<aside>Each item closes a limit from the previous slide.
+
+Walk the hotspots: the only way to get field-verified labels. Even a few dozen verdicts across a couple of farms would let us report a real false-alarm rate.
+Fly it properly: challenge 2. We have only tested on stitched research-station imagery. Fly one field at three altitudes with a reflectance calibration panel and find the smallest patch we can reliably catch at each. This also settles the calibration question that currently forces every hotspot to low confidence.
+Add a second date: the pipeline works on a single survey today. With two aligned surveys we can tag each patch as new, growing or stable.
+Tune with real data: plot detection against false alarms, then set thresholds and the fusion weights from verified fields instead of by hand.
+
+Optional extras if you have time to say them: RGB-only drones are supported today through a colour-index fallback, which matters because most drones farmers can reach have no multispectral camera.</aside>
+</section>

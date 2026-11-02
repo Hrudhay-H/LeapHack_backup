@@ -1,0 +1,44 @@
+<section id="limits" data-transition="fade" style="background:#12231F;color:#E9EDE7;font-family:'Public Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-direction:column;gap:24px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#EE8426;font-weight:500">Limits</p>
+<h2 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.05;letter-spacing:-1px;color:#E9EDE7">What AgriScout does not do</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px">
+<div style="display:flex;flex-direction:column;gap:12px;background:#1B332E;border:1px solid #2E4640;border-radius:8px;padding:28px">
+<p style="font-size:32px;font-weight:700;line-height:1.15;color:#E9EDE7">It does not name the pest.</p>
+<p style="font-size:24px;line-height:1.4;color:#B5C6BF">Hotspots are places to inspect. The cause and the species need someone on the ground.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#1B332E;border:1px solid #2E4640;border-radius:8px;padding:28px">
+<p style="font-size:32px;font-weight:700;line-height:1.15;color:#E9EDE7">No pest-labelled aerial test.</p>
+<p style="font-size:24px;line-height:1.4;color:#B5C6BF">We found no public top-down pest data. The anomaly farms use simulated stress.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#1B332E;border:1px solid #2E4640;border-radius:8px;padding:28px">
+<p style="font-size:32px;font-weight:700;line-height:1.15;color:#E9EDE7">It misses mild and small stress.</p>
+<p style="font-size:24px;line-height:1.4;color:#B5C6BF">It found 3 of 7 planted patches, all strong. Almost nothing else was flagged.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#1B332E;border:1px solid #2E4640;border-radius:8px;padding:28px">
+<p style="font-size:32px;font-weight:700;line-height:1.15;color:#E9EDE7">A uniformly stressed field passes.</p>
+<p style="font-size:24px;line-height:1.4;color:#B5C6BF">Each field is compared with itself, so nothing stands out when everything is affected.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#1B332E;border:1px solid #2E4640;border-radius:8px;padding:28px">
+<p style="font-size:32px;font-weight:700;line-height:1.15;color:#E9EDE7">The visual check is weak.</p>
+<p style="font-size:24px;line-height:1.4;color:#B5C6BF">Near chance on real maize and rice. It carries 30% of the score, a weight set after seeing our planted-patch results.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#1B332E;border:1px solid #2E4640;border-radius:8px;padding:28px">
+<p style="font-size:32px;font-weight:700;line-height:1.15;color:#E9EDE7">Prototype, not field-proven.</p>
+<p style="font-size:24px;line-height:1.4;color:#B5C6BF">No drone flown, no scouts yet. SMS is a mock and Kannada is unreviewed. Low confidence reflects unknown imagery calibration.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1000px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#B5C6BF">AgriScout AI · Problem 4</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#B5C6BF">12 / 14</p>
+<aside>Read this slide slowly. It is the reason the rest of the deck is believable.
+
+1. We do not name the pest. This is the problem statement’s own limit and our product follows it.
+2. We looked for public top-down pest-labelled data and did not find usable data. The only labelled pest, disease and abiotic set we found (cashew) is close-range and oblique. The two anomaly farms in the demo use simulated stress on real rice imagery.
+3. In that test the pipeline found 3 of 7 planted patches, all with severity of 0.7 or more, and missed the milder and smaller ones. Nearly every flagged pixel was inside a planted patch. High precision, modest recall.
+4. Because each field is scored against itself, a field that is stressed everywhere has no outlier. It would pass. A reference from a healthy neighbour could help, but a reference learned at one rice site did not transfer to another in our tests.
+5. The visual texture model was near chance on real maize and rice. We kept it as a minor, clearly labelled input. Its 30% weight was chosen after we saw results on the planted patches, so do not read the planted-patch result as independent proof. Thresholds are also provisional.
+6. No drone was flown and no scout has used it yet. SMS is a mock gateway; a one-time code proves control of a phone, not identity; Kannada text needs review; every hotspot shows low confidence because the dataset does not state its radiometric calibration. The farmers in the demo are fictional.
+
+Then say what we do about it: the next slide.</aside>
+</section>

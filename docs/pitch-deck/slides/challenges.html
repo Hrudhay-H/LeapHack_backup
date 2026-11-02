@@ -1,0 +1,18 @@
+<section id="challenges" data-transition="fade" style="background:#E9EDE7;color:#12231F;font-family:'Public Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A0E;font-weight:500">The five challenges</p>
+<h2 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.05;letter-spacing:-1px;color:#12231F">What the brief asks, and where we stand</h2>
+<table style="font-family:'Public Sans', Arial, sans-serif;font-size:26px;color:#12231F">
+<tr><th style="width:36%;text-align:left">Challenge</th><th style="width:42%;text-align:left">What AgriScout does</th><th style="width:22%;text-align:left">Status</th></tr>
+<tr><td>Separate pest damage from drought, nutrient stress or disease</td><td>Does not. Gives a pattern hint per hotspot and asks the scout to record what they find.</td><td><b>Open</b></td></tr>
+<tr><td>Catch early, small damage at practical altitude and resolution</td><td>Tested at 4.4 cm per pixel: found severe patches, missed mild and small ones.</td><td><b>Partly met</b></td></tr>
+<tr><td>Link aerial patterns to labelled ground findings</td><td>No public data we could use. Scout verdicts create it from the first survey.</td><td><b>Open</b></td></tr>
+<tr><td>Manage false alarms, misses and uncertainty</td><td>A clean field returns “no significant anomaly”. Every hotspot carries a confidence badge.</td><td><b>Partly met</b></td></tr>
+<tr><td>Fit hotspot maps into a simple scouting workflow</td><td>Ranked list, PDF report, dashboard, SMS and operator access, with scout verdicts.</td><td><b>Built, not field-tested</b></td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;width:1000px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4B5A54">AgriScout AI · Problem 4</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4B5A54">03 / 14</p>
+<aside>The five challenges are straight from the problem statement. We show our own status for each, including the two we have not solved. Status words are deliberately plain: Open means we have a mechanism but no evidence it works on real pests; Partly met means tested, with limits; Built, not field-tested means the software exists and runs end to end on real imagery with simulated stress.
+
+Challenge 2: we tested at 4.4 cm per pixel (stitched from 1.1 cm source patches). Severity mattered more than size in our small test, see the evidence slides.
+Challenge 3: we looked for public top-down pest-labelled data and did not find usable data. The scout verdict loop is our answer.</aside>
+</section>

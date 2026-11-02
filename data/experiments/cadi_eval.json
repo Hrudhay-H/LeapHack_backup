@@ -1,0 +1,59 @@
+{
+  "n_train_images": 300,
+  "n_test_images": 200,
+  "bank": 6000,
+  "classes_inferred": {
+    "0": "abiotic",
+    "1": "disease",
+    "2": "insect"
+  },
+  "pc": {
+    "abiotic": {
+      "pooled_auroc": 0.701,
+      "within_image_auroc_mean": 0.732,
+      "images_with_class": 151
+    },
+    "disease": {
+      "pooled_auroc": 0.645,
+      "within_image_auroc_mean": 0.647,
+      "images_with_class": 75
+    },
+    "insect": {
+      "pooled_auroc": 0.677,
+      "within_image_auroc_mean": 0.722,
+      "images_with_class": 35
+    },
+    "any": {
+      "pooled_auroc": 0.675,
+      "within_image_auroc_mean": null,
+      "images_with_class": null
+    }
+  },
+  "vari": {
+    "abiotic": {
+      "pooled_auroc": 0.609,
+      "within_image_auroc_mean": 0.622,
+      "images_with_class": 151
+    },
+    "disease": {
+      "pooled_auroc": 0.52,
+      "within_image_auroc_mean": 0.611,
+      "images_with_class": 75
+    },
+    "insect": {
+      "pooled_auroc": 0.652,
+      "within_image_auroc_mean": 0.72,
+      "images_with_class": 35
+    },
+    "any": {
+      "pooled_auroc": 0.583,
+      "within_image_auroc_mean": null,
+      "images_with_class": null
+    }
+  },
+  "pc_mean_score_inside_box_vs_outside_ratio": {
+    "abiotic": 1.052,
+    "disease": 1.036,
+    "insect": 1.058
+  }
+}

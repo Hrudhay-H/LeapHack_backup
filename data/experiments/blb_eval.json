@@ -1,0 +1,37 @@
+{
+  "n_fit_patches": 136,
+  "bank": 6000,
+  "spectral": {
+    "A_blight_vs_healthy": 0.808,
+    "A_high_vs_healthy": 0.821,
+    "A_low_vs_healthy": 0.772,
+    "B_high_vs_low_severity_within_blight_site": 0.645,
+    "C_same_class_others_site0_vs_site1": 0.002
+  },
+  "ndre": {
+    "A_blight_vs_healthy": 0.566,
+    "A_high_vs_healthy": 0.587,
+    "A_low_vs_healthy": 0.507,
+    "B_high_vs_low_severity_within_blight_site": 0.644,
+    "C_same_class_others_site0_vs_site1": 0.003
+  },
+  "vari": {
+    "A_blight_vs_healthy": 0.989,
+    "A_high_vs_healthy": 0.989,
+    "A_low_vs_healthy": 0.988,
+    "B_high_vs_low_severity_within_blight_site": 0.588,
+    "C_same_class_others_site0_vs_site1": 0.2
+  },
+  "patchcore": {
+    "A_blight_vs_healthy": 0.877,
+    "A_high_vs_healthy": 0.88,
+    "A_low_vs_healthy": 0.868,
+    "B_high_vs_low_severity_within_blight_site": 0.542,
+    "C_same_class_others_site0_vs_site1": 0.308
+  },
+  "pixels": {
+    "healthy_held": 224785,
+    "blight_low": 126585,
+    "blight_high": 350309
+  }
+}

@@ -1,0 +1,21 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+@theme {
+  --font-sans: "Segoe UI", "Nirmala UI", "Noto Sans Kannada", system-ui, sans-serif;
+  --color-brand-50: #f0fdf4;
+  --color-brand-100: #dcfce7;
+  --color-brand-600: #16a34a;
+  --color-brand-700: #15803d;
+  --color-brand-900: #14532d;
+}
+
+body {
+  background: #f7faf7;
+  color: #111827;
+}
+
+.leaflet-container {
+  background: #1f2a22;
+  font-family: inherit;
+}

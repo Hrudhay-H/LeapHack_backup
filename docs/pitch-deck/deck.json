@@ -1,0 +1,21 @@
+{
+  "v": 4,
+  "createdOnFiles": { "v": 1, "at": "2026-11-02T15:00:00Z" },
+  "lists": "css",
+  "title": "AgriScout AI Pitch",
+  "order": ["cover", "brief", "challenges", "pipeline", "method", "survey-day", "report", "delivery", "scout-loop", "evidence", "ladder", "limits", "next", "close"],
+  "cover": "cover",
+  "sections": {
+    "s1": { "description": "The brief and how AgriScout answers its five challenges", "start": "cover" },
+    "s2": { "description": "How the analysis works", "start": "pipeline" },
+    "s3": { "description": "A survey day on real imagery, through to the farmer", "start": "survey-day" },
+    "s4": { "description": "What the evidence supports and where it stops", "start": "evidence" },
+    "s5": { "description": "What comes next", "start": "next" }
+  },
+  "faces": {
+    "bricolage-grotesque": { "family": "Bricolage Grotesque", "href": "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500..800&display=swap" },
+    "public-sans": { "family": "Public Sans", "href": "https://fonts.googleapis.com/css2?family=Public+Sans:wght@400..700&display=swap" },
+    "jetbrains-mono": { "family": "JetBrains Mono", "href": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400..600&display=swap" }
+  },
+  "designSystems": []
+}

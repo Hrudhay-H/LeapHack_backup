@@ -1,0 +1,29 @@
+<section id="method" data-transition="fade" style="background:#E9EDE7;color:#12231F;font-family:'Public Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:28px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A0E;font-weight:500">The method</p>
+<h2 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.05;letter-spacing:-1px;color:#12231F">The baseline compares a field with itself.</h2>
+</div>
+<div style="display:flex;gap:32px;align-items:stretch">
+<div style="display:flex;flex-direction:column;gap:20px;flex:1;background:#F6F8F4;border:1px solid #C7D0C8;border-radius:8px;padding:40px">
+<h3 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:44px;font-weight:600;line-height:1.1;color:#12231F">Compared with itself</h3>
+<p style="font-size:32px;line-height:1.35;color:#12231F">Each pixel is scored against the median and spread of its own field. Sensors and lighting differ between farms, and a reference learned at one site did not carry over.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:20px;flex:1;background:#F6F8F4;border:1px solid #C7D0C8;border-radius:8px;padding:40px">
+<h3 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:44px;font-weight:600;line-height:1.1;color:#12231F">A floor, not a ranking</h3>
+<p style="font-size:32px;line-height:1.35;color:#12231F">Below a set deviation nothing is flagged. A healthy field returns “no significant anomaly” instead of a forced top five percent.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:20px;flex:1;background:#F6F8F4;border:1px solid #C7D0C8;border-radius:8px;padding:40px">
+<h3 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:44px;font-weight:600;line-height:1.1;color:#12231F">A second look, held lightly</h3>
+<p style="font-size:32px;line-height:1.35;color:#12231F">A pretrained model checks canopy texture. It was near chance on real maize and rice, so it carries 30% of the fused score.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1000px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4B5A54">AgriScout AI · Problem 4</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4B5A54">05 / 14</p>
+<aside>Three design decisions, each forced by something we saw in real data.
+
+1. Compared with itself. A robust median and MAD z-score within the field. We tried the alternative: a reference learned at the healthy rice site, applied to the blight site. It did not transfer. Exposure, ground cover and date differ between sites, so absolute thresholds break.
+
+2. A floor, not a ranking. If we flagged the top few percent of pixels, every field would have hotspots. With an absolute floor, a healthy real rice block and a real maize field both come back as “no significant anomaly”. That is a valid result, not a failed scan.
+
+3. A second look, held lightly. The visual texture model (PatchCore on a pretrained ResNet-18) was near chance on real maize (0.56 to 0.66 AUROC) and on rice blight severity (0.54). We kept it as an experimental second opinion. Its 30% weight was chosen after seeing results on our planted patches, so it is provisional, and the limits slide says so.</aside>
+</section>

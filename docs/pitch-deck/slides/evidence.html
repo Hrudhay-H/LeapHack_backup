@@ -1,0 +1,24 @@
+<section id="evidence" data-transition="fade" style="background:#E9EDE7;color:#12231F;font-family:'Public Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:24px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A0E;font-weight:500">Evidence</p>
+<h2 style="font-family:'Bricolage Grotesque', Arial, sans-serif;font-size:72px;font-weight:700;line-height:1.05;letter-spacing:-1px;color:#12231F">What we tested, and what it showed</h2>
+<table style="font-family:'Public Sans', Arial, sans-serif;font-size:26px;color:#12231F">
+<tr><th style="width:24%;text-align:left">Test</th><th style="width:36%;text-align:left">Data and labels</th><th style="width:40%;text-align:left">Result</th></tr>
+<tr><td>Planted stress on real rice</td><td>Top-down plots; 7 simulated patches added</td><td>3 of 7 found, all strong. Nearly every flagged pixel inside a patch. Mild and small patches missed.</td></tr>
+<tr><td>Maize, two real fields</td><td>Top-down; labels derived from the vegetation index</td><td>Index 0.78 to 0.94. Visual check 0.56 to 0.66.</td></tr>
+<tr><td>Blight severity, real rice</td><td>Top-down; expert plot labels, high against low severity</td><td>Index 0.64 to 0.65. Visual check 0.54, near chance.</td></tr>
+<tr><td>Cashew leaf damage</td><td>Close-range and oblique, not aerial; human-drawn boxes</td><td>Visual check 0.65 to 0.73. Colour index 0.61 to 0.72.</td></tr>
+</table>
+<p style="font-size:32px;line-height:1.35;color:#12231F"><b>The vegetation index is the dependable signal. The visual check is weak.</b></p>
+<p style="font-size:24px;line-height:1.4;color:#4B5A54">Scores are AUROC: 0.5 is chance, 1.0 is perfect. The maize labels come from the index itself, so they favour it.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1000px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4B5A54">AgriScout AI · Problem 4</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4B5A54">10 / 14</p>
+<aside>Four tests, from four different data sources, so no single dataset carries the story.
+
+Planted stress on real rice: our own simulator-style test. The two anomaly farms contain 7 patches in total; 3 were found, and the ones found had severity of 0.7 or more. The patches missed were milder, whatever their size. That is seven patches, so treat it as an observation, not a rate.
+
+Maize: two real top-down mosaics from a public dataset. The labels were derived from vegetation-index thresholds, which flatters the index and says little about the visual model.
+
+Rice blight: top-down paddy with expert subplot labels. Low and high severity were spectrally almost identical (mean NDVI 0.205 against 0.193), so every score is weak here. We also found healthy and blighted rice sit in different fields in that dataset, so a healthy-versus-blight score is confounded by site; we used the within-site severity comparison instead.
+
+Cashew: the only set with pest, disease and abiotic labels, but the images are close-range and oblique, so it says nothing certain about aerial surveys.</aside>
+</section>

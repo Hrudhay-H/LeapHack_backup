@@ -1,0 +1,23 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+
+# Secrets and local config
+.env
+.claude/
+
+# Local database
+*.db
+
+# Everything under data/ is generated or downloaded (datasets, models, runs, reports, logs, screenshots),
+# except the small experiment result files that back the numbers in the README.
+data/*
+!data/experiments/
+data/experiments/*.log

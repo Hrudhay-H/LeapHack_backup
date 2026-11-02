@@ -1,0 +1,8 @@
+{"gsd": "5cm", "fit": "water", "test": "rust", "model": "patchcore_cr0.1", "bank": 2606, "secs": 10, "px_auroc": 0.504, "blk_auroc": 0.569, "blk_spearman": 0.029, "blk_pos": 6, "blk_n": 1282}
+{"gsd": "5cm", "fit": "water", "test": "rust", "model": "patchcore_cr0.5", "bank": 13032, "secs": 32, "px_auroc": 0.503, "blk_auroc": 0.554, "blk_spearman": 0.033, "blk_pos": 6, "blk_n": 1282}
+{"gsd": "5cm", "fit": "rust", "test": "water", "model": "patchcore_cr0.1", "bank": 1353, "secs": 6, "px_auroc": 0.603, "blk_auroc": 0.797, "blk_spearman": 0.173, "blk_pos": 5, "blk_n": 1326}
+{"gsd": "5cm", "fit": "rust", "test": "water", "model": "patchcore_cr0.5", "bank": 6768, "secs": 12, "px_auroc": 0.599, "blk_auroc": 0.808, "blk_spearman": 0.144, "blk_pos": 5, "blk_n": 1326}
+{"gsd": "2cm", "fit": "water", "test": "rust", "model": "patchcore_cr0.1", "bank": 6000, "secs": 63, "px_auroc": 0.555, "blk_auroc": 0.591, "blk_spearman": 0.245, "blk_pos": 6, "blk_n": 1466}
+{"gsd": "2cm", "fit": "water", "test": "rust", "model": "patchcore_cr0.5", "bank": 30000, "secs": 246, "px_auroc": 0.56, "blk_auroc": 0.59, "blk_spearman": 0.249, "blk_pos": 6, "blk_n": 1466}
+{"gsd": "2cm", "fit": "rust", "test": "water", "model": "patchcore_cr0.1", "bank": 6000, "secs": 81, "px_auroc": 0.635, "blk_auroc": 0.468, "blk_spearman": 0.324, "blk_pos": 6, "blk_n": 1403}
+{"gsd": "2cm", "fit": "rust", "test": "water", "model": "patchcore_cr0.5", "bank": 30000, "secs": 178, "px_auroc": 0.66, "blk_auroc": 0.567, "blk_spearman": 0.327, "blk_pos": 6, "blk_n": 1403}
